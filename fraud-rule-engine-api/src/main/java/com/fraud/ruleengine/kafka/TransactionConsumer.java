@@ -10,6 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -24,8 +25,7 @@ import org.springframework.validation.annotation.Validated;
  * - Transient errors: retried (configured in KafkaConfig)
  * - After retry exhaustion: routed to DLQ
  *
- * Design: Synchronous processing (blocking) per message.
- * Production alternative: async processing with virtual threads (Java 21).
+ * Design: Asynchronous processing with custom thread pool for scalability.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,10 +38,13 @@ public class TransactionConsumer {
     /**
      * Consumes transactions from Kafka and evaluates them against fraud rules.
      *
+     * Processing is done asynchronously to improve throughput and scalability.
+     *
      * @param transaction The transaction (deserialized from JSON)
      * @param partition The Kafka partition
      * @param offset The message offset
      */
+    @Async
     @KafkaListener(
         topics = "${app.kafka.topics.transactions}",
         groupId = "${spring.kafka.consumer.group-id}",

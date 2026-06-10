@@ -96,6 +96,36 @@ public class Rule {
     @DecimalMin(value = "0.0", inclusive = false, message = "Max amount must be positive")
     private BigDecimal maxAmount;
 
+    // For TIME_OF_DAY_ANOMALY rule type
+    @Column(name = "start_hour")
+    @Min(value = 0, message = "Start hour must be between 0 and 23")
+    @Max(value = 23, message = "Start hour must be between 0 and 23")
+    private Integer startHour;
+
+    @Column(name = "end_hour")
+    @Min(value = 0, message = "End hour must be between 0 and 23")
+    @Max(value = 23, message = "End hour must be between 0 and 23")
+    private Integer endHour;
+
+    // For ROUND_AMOUNT rule type
+    @Column(name = "minimum_amount", precision = 19, scale = 2)
+    @DecimalMin(value = "0.0", inclusive = false, message = "Minimum amount must be positive")
+    private BigDecimal minimumAmount;
+
+    @Column(name = "round_to_nearest")
+    private Integer roundToNearest;
+
+    // For cross-border rules (CROSS_BORDER_HIGH_RISK, CURRENCY_MISMATCH)
+    @Column(name = "customer_home_country", length = 3)
+    @Size(min = 3, max = 3, message = "Customer home country must be exactly 3 characters (ISO 3166-1 alpha-3)")
+    @Pattern(regexp = "[A-Z]{3}", message = "Customer home country must be 3 uppercase letters")
+    private String customerHomeCountry;
+
+    @Column(name = "customer_home_currency", length = 3)
+    @Size(min = 3, max = 3, message = "Customer home currency must be exactly 3 characters (ISO 4217)")
+    @Pattern(regexp = "[A-Z]{3}", message = "Customer home currency must be 3 uppercase letters")
+    private String customerHomeCurrency;
+
     // Audit fields
 
     @CreatedDate
@@ -147,12 +177,12 @@ public class Rule {
     }
 
     /**
-     * Validates that VELOCITY rules have required parameters.
+     * Validates that TIME_OF_DAY_ANOMALY rules have required parameters.
      */
-    @AssertTrue(message = "Velocity rule requires threshold_count and time_window_minutes")
-    private boolean isVelocityRuleValid() {
-        if (ruleType == RuleType.VELOCITY) {
-            return thresholdCount != null && timeWindowMinutes != null;
+    @AssertTrue(message = "Time of day anomaly rule requires start_hour and end_hour")
+    private boolean isTimeOfDayAnomalyRuleValid() {
+        if (ruleType == RuleType.TIME_OF_DAY_ANOMALY) {
+            return startHour != null && endHour != null;
         }
         return true;
     }
@@ -191,12 +221,58 @@ public class Rule {
     }
 
     /**
-     * Validates that RAPID_FIRE rules have required parameters.
+     * Validates that ROUND_AMOUNT rules have required parameters.
      */
-    @AssertTrue(message = "Rapid fire rule requires threshold_count and time_window_minutes")
-    private boolean isRapidFireRuleValid() {
-        if (ruleType == RuleType.RAPID_FIRE) {
-            return thresholdCount != null && timeWindowMinutes != null;
+    @AssertTrue(message = "Round amount rule requires minimum_amount and round_to_nearest")
+    private boolean isRoundAmountRuleValid() {
+        if (ruleType == RuleType.ROUND_AMOUNT) {
+            return minimumAmount != null && roundToNearest != null;
+        }
+        return true;
+    }
+
+    /**
+     * Validates that CNP_HIGH_RISK rules have merchant_category set.
+     */
+    @AssertTrue(message = "CNP high risk rule requires merchant_category")
+    private boolean isCnpHighRiskRuleValid() {
+        if (ruleType == RuleType.CNP_HIGH_RISK) {
+            return merchantCategory != null && !merchantCategory.isBlank();
+        }
+        return true;
+    }
+
+    /**
+     * Validates that CURRENCY_MISMATCH rules have required parameters.
+     */
+    @AssertTrue(message = "Currency mismatch rule requires customer_home_country and customer_home_currency")
+    private boolean isCurrencyMismatchRuleValid() {
+        if (ruleType == RuleType.CURRENCY_MISMATCH) {
+            return customerHomeCountry != null && !customerHomeCountry.isBlank()
+                && customerHomeCurrency != null && !customerHomeCurrency.isBlank();
+        }
+        return true;
+    }
+
+    /**
+     * Validates that CROSS_BORDER_HIGH_RISK rules have required parameters.
+     */
+    @AssertTrue(message = "Cross-border high risk rule requires customer_home_country and country_code")
+    private boolean isCrossBorderHighRiskRuleValid() {
+        if (ruleType == RuleType.CROSS_BORDER_HIGH_RISK) {
+            return customerHomeCountry != null && !customerHomeCountry.isBlank()
+                && countryCode != null && !countryCode.isBlank();
+        }
+        return true;
+    }
+
+    /**
+     * Validates that LARGE_WITHDRAWAL rules have threshold_amount set.
+     */
+    @AssertTrue(message = "Large withdrawal rule requires threshold_amount")
+    private boolean isLargeWithdrawalRuleValid() {
+        if (ruleType == RuleType.LARGE_WITHDRAWAL) {
+            return thresholdAmount != null;
         }
         return true;
     }
