@@ -11,13 +11,18 @@ interface RuleEditModalProps {
 }
 
 const RULE_TYPES: { value: RuleType; label: string; description: string }[] = [
+  { value: 'CUSTOMER_BLOCKLIST', label: 'Customer Blocklist', description: 'Instantly blocks transactions from blocklisted customers (highest priority)' },
+  { value: 'MERCHANT_BLOCKLIST', label: 'Merchant Blocklist', description: 'Instantly blocks transactions at blocklisted merchants' },
   { value: 'AMOUNT_THRESHOLD', label: 'Amount Threshold', description: 'Triggers on transactions exceeding a specific amount' },
-  { value: 'VELOCITY', label: 'Velocity', description: 'Triggers on multiple transactions within a time window' },
-  { value: 'GEOGRAPHIC_ANOMALY', label: 'Geographic Anomaly', description: 'Triggers on transactions from specific countries' },
-  { value: 'MERCHANT_RISK', label: 'Merchant Risk', description: 'Triggers on high-risk merchant categories' },
-  { value: 'AMOUNT_RANGE', label: 'Amount Range', description: 'Triggers on transactions within a specific amount range' },
-  { value: 'RAPID_FIRE', label: 'Rapid Fire', description: 'Triggers on rapid succession of transactions' },
-  { value: 'DORMANT_ACCOUNT', label: 'Dormant Account', description: 'Triggers on activity from dormant accounts' },
+  { value: 'GEOGRAPHIC_ANOMALY', label: 'Geographic Anomaly', description: 'Triggers on transactions from high-risk countries' },
+  { value: 'MERCHANT_RISK', label: 'Merchant Risk', description: 'Triggers on high-risk merchant categories (e.g., gambling)' },
+  { value: 'AMOUNT_RANGE', label: 'Amount Range', description: 'Triggers on transactions within a suspicious range (e.g., structuring)' },
+  { value: 'TIME_OF_DAY_ANOMALY', label: 'Time of Day Anomaly', description: 'Triggers on transactions during unusual hours (e.g., 2-5 AM)' },
+  { value: 'ROUND_AMOUNT', label: 'Round Amount', description: 'Triggers on large round-number amounts (card testing pattern)' },
+  { value: 'CNP_HIGH_RISK', label: 'CNP High Risk', description: 'Card-not-present transactions at high-risk merchants (online fraud)' },
+  { value: 'CURRENCY_MISMATCH', label: 'Currency Mismatch', description: 'Triggers on foreign currency transactions outside home country' },
+  { value: 'CROSS_BORDER_HIGH_RISK', label: 'Cross-Border High Risk', description: 'Cross-border transactions to high-risk countries' },
+  { value: 'LARGE_WITHDRAWAL', label: 'Large Withdrawal', description: 'Triggers on large ATM or cash withdrawals' },
 ];
 
 export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleEditModalProps) {
@@ -35,6 +40,13 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
     countryCode: rule?.countryCode,
     minAmount: rule?.minAmount,
     maxAmount: rule?.maxAmount,
+    // New fields
+    startHour: rule?.startHour,
+    endHour: rule?.endHour,
+    minimumAmount: rule?.minimumAmount,
+    roundToNearest: rule?.roundToNearest,
+    customerHomeCountry: rule?.customerHomeCountry,
+    customerHomeCurrency: rule?.customerHomeCurrency,
   });
 
   const [saving, setSaving] = useState(false);
@@ -73,12 +85,15 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
   };
 
   // Determine which fields to show based on rule type
-  const showThresholdAmount = ['AMOUNT_THRESHOLD', 'MERCHANT_RISK'].includes(formData.ruleType!);
-  const showThresholdCount = ['VELOCITY', 'RAPID_FIRE'].includes(formData.ruleType!);
-  const showTimeWindow = ['VELOCITY', 'RAPID_FIRE', 'DORMANT_ACCOUNT'].includes(formData.ruleType!);
+  const showThresholdAmount = ['AMOUNT_THRESHOLD', 'LARGE_WITHDRAWAL'].includes(formData.ruleType!);
   const showAmountRange = formData.ruleType === 'AMOUNT_RANGE';
-  const showCountryCode = formData.ruleType === 'GEOGRAPHIC_ANOMALY';
-  const showMerchantCategory = formData.ruleType === 'MERCHANT_RISK';
+  const showCountryCode = ['GEOGRAPHIC_ANOMALY', 'CROSS_BORDER_HIGH_RISK'].includes(formData.ruleType!);
+  const showMerchantCategory = ['MERCHANT_RISK', 'CNP_HIGH_RISK'].includes(formData.ruleType!);
+  const showTimeOfDay = formData.ruleType === 'TIME_OF_DAY_ANOMALY';
+  const showRoundAmount = formData.ruleType === 'ROUND_AMOUNT';
+  const showCurrencyMismatch = formData.ruleType === 'CURRENCY_MISMATCH';
+  const showCrossBorder = formData.ruleType === 'CROSS_BORDER_HIGH_RISK';
+  const showNoConfig = ['CUSTOMER_BLOCKLIST', 'MERCHANT_BLOCKLIST'].includes(formData.ruleType!);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -193,10 +208,22 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
               </div>
 
               {/* Conditional Fields Based on Rule Type */}
+
+              {/* No configuration needed for blocklist rules */}
+              {showNoConfig && (
+                <div className="bg-cap-blue-50 border border-cap-blue-200 rounded p-4 text-sm">
+                  <p className="text-cap-text">
+                    <strong className="text-cap-deep-blue">Note:</strong> This rule type checks against the blocklist tables.
+                    No additional configuration is required. Manage blocklists in the Blocklists section.
+                  </p>
+                </div>
+              )}
+
+              {/* AMOUNT_THRESHOLD, LARGE_WITHDRAWAL */}
               {showThresholdAmount && (
                 <div>
                   <label htmlFor="thresholdAmount" className="label">
-                    Threshold Amount
+                    Threshold Amount <span className="text-cap-red">*</span>
                   </label>
                   <input
                     type="number"
@@ -205,47 +232,21 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
                     onChange={(e) => handleChange('thresholdAmount', parseFloat(e.target.value))}
                     className="input w-full"
                     step="0.01"
+                    required
+                    placeholder="e.g., 50000.00"
                   />
+                  <p className="text-xs text-cap-text-muted mt-1">
+                    {formData.ruleType === 'LARGE_WITHDRAWAL' ? 'Maximum withdrawal amount before triggering' : 'Minimum transaction amount to trigger'}
+                  </p>
                 </div>
               )}
 
-              {showThresholdCount && (
-                <div>
-                  <label htmlFor="thresholdCount" className="label">
-                    Threshold Count
-                  </label>
-                  <input
-                    type="number"
-                    id="thresholdCount"
-                    value={formData.thresholdCount || ''}
-                    onChange={(e) => handleChange('thresholdCount', parseInt(e.target.value))}
-                    className="input w-full"
-                    min="1"
-                  />
-                </div>
-              )}
-
-              {showTimeWindow && (
-                <div>
-                  <label htmlFor="timeWindowMinutes" className="label">
-                    Time Window (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    id="timeWindowMinutes"
-                    value={formData.timeWindowMinutes || ''}
-                    onChange={(e) => handleChange('timeWindowMinutes', parseInt(e.target.value))}
-                    className="input w-full"
-                    min="1"
-                  />
-                </div>
-              )}
-
+              {/* AMOUNT_RANGE */}
               {showAmountRange && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="minAmount" className="label">
-                      Min Amount
+                      Min Amount <span className="text-cap-red">*</span>
                     </label>
                     <input
                       type="number"
@@ -254,11 +255,13 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
                       onChange={(e) => handleChange('minAmount', parseFloat(e.target.value))}
                       className="input w-full"
                       step="0.01"
+                      required
+                      placeholder="e.g., 9000.00"
                     />
                   </div>
                   <div>
                     <label htmlFor="maxAmount" className="label">
-                      Max Amount
+                      Max Amount <span className="text-cap-red">*</span>
                     </label>
                     <input
                       type="number"
@@ -267,15 +270,18 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
                       onChange={(e) => handleChange('maxAmount', parseFloat(e.target.value))}
                       className="input w-full"
                       step="0.01"
+                      required
+                      placeholder="e.g., 9999.99"
                     />
                   </div>
                 </div>
               )}
 
+              {/* GEOGRAPHIC_ANOMALY, CROSS_BORDER_HIGH_RISK */}
               {showCountryCode && (
                 <div>
                   <label htmlFor="countryCode" className="label">
-                    Country Code
+                    Country Code (ISO 3166-1) <span className="text-cap-red">*</span>
                   </label>
                   <input
                     type="text"
@@ -284,15 +290,18 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
                     onChange={(e) => handleChange('countryCode', e.target.value.toUpperCase())}
                     className="input w-full"
                     maxLength={3}
-                    placeholder="e.g., RUS, USA"
+                    required
+                    placeholder="e.g., RUS, PRK, USA"
                   />
+                  <p className="text-xs text-cap-text-muted mt-1">3-letter country code (alpha-3)</p>
                 </div>
               )}
 
+              {/* MERCHANT_RISK, CNP_HIGH_RISK */}
               {showMerchantCategory && (
                 <div>
                   <label htmlFor="merchantCategory" className="label">
-                    Merchant Category
+                    Merchant Category <span className="text-cap-red">*</span>
                   </label>
                   <input
                     type="text"
@@ -300,7 +309,150 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
                     value={formData.merchantCategory || ''}
                     onChange={(e) => handleChange('merchantCategory', e.target.value)}
                     className="input w-full"
+                    required
+                    placeholder="e.g., GAMBLING, ELECTRONICS, JEWELRY"
                   />
+                  <p className="text-xs text-cap-text-muted mt-1">
+                    {formData.ruleType === 'CNP_HIGH_RISK' ? 'High-risk category for card-not-present transactions' : 'High-risk merchant category'}
+                  </p>
+                </div>
+              )}
+
+              {/* TIME_OF_DAY_ANOMALY */}
+              {showTimeOfDay && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="startHour" className="label">
+                      Start Hour (0-23) <span className="text-cap-red">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="startHour"
+                      value={formData.startHour ?? ''}
+                      onChange={(e) => handleChange('startHour', parseInt(e.target.value))}
+                      className="input w-full"
+                      min="0"
+                      max="23"
+                      required
+                      placeholder="e.g., 2"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="endHour" className="label">
+                      End Hour (0-23) <span className="text-cap-red">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="endHour"
+                      value={formData.endHour ?? ''}
+                      onChange={(e) => handleChange('endHour', parseInt(e.target.value))}
+                      className="input w-full"
+                      min="0"
+                      max="23"
+                      required
+                      placeholder="e.g., 5"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* ROUND_AMOUNT */}
+              {showRoundAmount && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="minimumAmount" className="label">
+                      Minimum Amount <span className="text-cap-red">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="minimumAmount"
+                      value={formData.minimumAmount || ''}
+                      onChange={(e) => handleChange('minimumAmount', parseFloat(e.target.value))}
+                      className="input w-full"
+                      step="0.01"
+                      required
+                      placeholder="e.g., 1000.00"
+                    />
+                    <p className="text-xs text-cap-text-muted mt-1">Only check amounts above this</p>
+                  </div>
+                  <div>
+                    <label htmlFor="roundToNearest" className="label">
+                      Round To Nearest <span className="text-cap-red">*</span>
+                    </label>
+                    <select
+                      id="roundToNearest"
+                      value={formData.roundToNearest || ''}
+                      onChange={(e) => handleChange('roundToNearest', parseInt(e.target.value))}
+                      className="select w-full"
+                      required
+                    >
+                      <option value="">Select...</option>
+                      <option value="10">10</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                      <option value="500">500</option>
+                      <option value="1000">1000</option>
+                    </select>
+                    <p className="text-xs text-cap-text-muted mt-1">Check if amount is multiple of this</p>
+                  </div>
+                </div>
+              )}
+
+              {/* CURRENCY_MISMATCH */}
+              {showCurrencyMismatch && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="customerHomeCountry" className="label">
+                      Customer Home Country <span className="text-cap-red">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="customerHomeCountry"
+                      value={formData.customerHomeCountry || ''}
+                      onChange={(e) => handleChange('customerHomeCountry', e.target.value.toUpperCase())}
+                      className="input w-full"
+                      maxLength={3}
+                      required
+                      placeholder="e.g., ZAF"
+                    />
+                    <p className="text-xs text-cap-text-muted mt-1">3-letter country code</p>
+                  </div>
+                  <div>
+                    <label htmlFor="customerHomeCurrency" className="label">
+                      Customer Home Currency <span className="text-cap-red">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="customerHomeCurrency"
+                      value={formData.customerHomeCurrency || ''}
+                      onChange={(e) => handleChange('customerHomeCurrency', e.target.value.toUpperCase())}
+                      className="input w-full"
+                      maxLength={3}
+                      required
+                      placeholder="e.g., ZAR"
+                    />
+                    <p className="text-xs text-cap-text-muted mt-1">3-letter currency code (ISO 4217)</p>
+                  </div>
+                </div>
+              )}
+
+              {/* CROSS_BORDER_HIGH_RISK */}
+              {showCrossBorder && (
+                <div>
+                  <label htmlFor="customerHomeCountry" className="label">
+                    Customer Home Country <span className="text-cap-red">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="customerHomeCountry"
+                    value={formData.customerHomeCountry || ''}
+                    onChange={(e) => handleChange('customerHomeCountry', e.target.value.toUpperCase())}
+                    className="input w-full"
+                    maxLength={3}
+                    required
+                    placeholder="e.g., ZAF"
+                  />
+                  <p className="text-xs text-cap-text-muted mt-1">Customer's home country (3-letter code)</p>
                 </div>
               )}
             </div>

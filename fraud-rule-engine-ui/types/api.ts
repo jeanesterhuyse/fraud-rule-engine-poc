@@ -26,20 +26,32 @@ export interface Rule {
   countryCode?: string;
   minAmount?: number;
   maxAmount?: number;
+  // New fields for additional rule types
+  startHour?: number;
+  endHour?: number;
+  minimumAmount?: number;
+  roundToNearest?: number;
+  customerHomeCountry?: string;
+  customerHomeCurrency?: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
 }
 
-export type RuleType = 
+export type RuleType =
   | 'AMOUNT_THRESHOLD'
-  | 'VELOCITY'
   | 'GEOGRAPHIC_ANOMALY'
   | 'MERCHANT_RISK'
   | 'AMOUNT_RANGE'
-  | 'RAPID_FIRE'
-  | 'DORMANT_ACCOUNT';
+  | 'TIME_OF_DAY_ANOMALY'
+  | 'ROUND_AMOUNT'
+  | 'CUSTOMER_BLOCKLIST'
+  | 'MERCHANT_BLOCKLIST'
+  | 'CNP_HIGH_RISK'
+  | 'CURRENCY_MISMATCH'
+  | 'CROSS_BORDER_HIGH_RISK'
+  | 'LARGE_WITHDRAWAL';
 
 // Triggered Transaction types
 export interface TriggeredTransaction {
