@@ -2,30 +2,39 @@
 
 A real-time fraud detection system with a rules engine, built with Spring Boot, React, Kafka, and PostgreSQL.
 
-**Status:** ✅ Production-Ready with Enterprise Observability  
-**Last Updated:** June 10, 2026 - 19:30
+**Status:** ✅ Production-Ready with Enterprise Observability + Async Processing + Blocklists  
+**Last Updated:** June 11, 2026 - 01:30
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Automated Setup)
 
 ### Prerequisites
 - Docker and Docker Compose (4GB+ RAM recommended)
 - Node.js 18+ (for UI development)
 - Java 21 (for API development)
 
-### Start the System
+### One-Command Startup
 
 ```bash
-# Start all services (API, UI, Database, Kafka, Observability Stack)
-docker-compose up -d
+# Automated setup - configures everything automatically
+./start-dev.sh
 
-# Check service health (all should show "healthy")
-docker-compose ps
+# Then start the UI
+cd fraud-rule-engine-ui
+npm install  # First time only
+npm run dev
 ```
 
-**Access Points:**
+**Login:** http://localhost:3000/login-keycloak
+- Username: `john.smith`
+- Password: `FraudDetect123!`
+
+> 📚 **New to the project?** See **[GETTING_STARTED.md](GETTING_STARTED.md)** for complete setup instructions, test users, and troubleshooting.
+
+### Access Points
 - 🎨 **UI Dashboard**: http://localhost:3000
+- 🔐 **Login Page**: http://localhost:3000/login-keycloak
 - 📊 **Grafana Observability**: http://localhost:3001 (anonymous access enabled)
 - 🔐 **Keycloak Auth**: http://localhost:8180 (admin/admin)
 - 🔧 **API**: http://localhost:8080
