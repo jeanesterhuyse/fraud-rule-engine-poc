@@ -24,11 +24,12 @@ cd fraud-rule-engine-poc
 
 This script automatically:
 - ✅ Starts all Docker services (API, Database, Kafka, Keycloak, Grafana)
-- ✅ Creates Keycloak database and schema
+- ✅ **Automated Keycloak database creation** (no manual steps required)
 - ✅ Configures authentication realm and test users
 - ✅ Waits for all services to be healthy
-- ✅ Loads 16 fraud detection rules
+- ✅ Loads 16 fraud detection rules (12 rule types)
 - ✅ Loads blocklist test data
+- ✅ **Async processing** enabled with custom thread pool (fraud-async-1, fraud-async-2)
 
 ### Start the Frontend
 
@@ -61,19 +62,19 @@ Open your browser and navigate to:
 
 After startup, the system includes:
 
-### Fraud Detection Rules (16 active)
-- **CUSTOMER_BLOCKLIST** - Instant block for blocklisted customers
-- **MERCHANT_BLOCKLIST** - Instant block for blocklisted merchants
-- **AMOUNT_THRESHOLD** - Large transaction alerts
-- **GEOGRAPHIC_ANOMALY** - High-risk country detection
-- **CROSS_BORDER_HIGH_RISK** - Cross-border to high-risk countries
-- **AMOUNT_RANGE** - Structuring detection
-- **LARGE_WITHDRAWAL** - Large ATM withdrawals
-- **TIME_OF_DAY_ANOMALY** - Unusual hours (2-5 AM)
-- **ROUND_AMOUNT** - Card testing detection
-- **CNP_HIGH_RISK** - Card-not-present fraud (Electronics, Jewelry, Travel)
-- **CURRENCY_MISMATCH** - Foreign currency anomalies
-- **MERCHANT_RISK** - High-risk merchants (Gambling, Crypto)
+### Fraud Detection Rules (16 active - 12 rule types)
+- **CUSTOMER_BLOCKLIST** - Instant block for blocklisted customers (Risk: 100)
+- **MERCHANT_BLOCKLIST** - Instant block for blocklisted merchants (Risk: 95)
+- **AMOUNT_THRESHOLD** - Large transaction alerts (Risk: 50-100)
+- **GEOGRAPHIC_ANOMALY** - High-risk country detection (Risk: 75)
+- **CROSS_BORDER_HIGH_RISK** - Cross-border to high-risk countries (Risk: 90)
+- **AMOUNT_RANGE** - Structuring detection (Risk: 70)
+- **LARGE_WITHDRAWAL** - Large ATM withdrawals (Risk: 50-80)
+- **TIME_OF_DAY_ANOMALY** - Unusual hours (2-5 AM) (Risk: 60)
+- **ROUND_AMOUNT** - Card testing detection (Risk: 55-65)
+- **CNP_HIGH_RISK** - Card-not-present fraud (Electronics, Jewelry, Travel) (Risk: 60-75)
+- **CURRENCY_MISMATCH** - Foreign currency anomalies (Risk: 55)
+- **MERCHANT_RISK** - High-risk merchants (Gambling, Crypto) (Risk: 65)
 
 ### Blocklist Test Data
 - **Blocked Customers**: CUST-BLOCKED-001, CUST-BLOCKED-002

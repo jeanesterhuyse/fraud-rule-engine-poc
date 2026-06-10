@@ -2,7 +2,7 @@
 
 **Fraud Rule Engine POC - Complete Documentation**
 
-Last Updated: June 9, 2026
+Last Updated: June 11, 2026
 
 ---
 
@@ -10,17 +10,19 @@ Last Updated: June 9, 2026
 
 Start here if you're new:
 
-1. **[README.md](README.md)** - Project overview, quick start, features
-2. **[KEYCLOAK_QUICKSTART.md](docs/guides/KEYCLOAK_QUICKSTART.md)** - 5-minute authentication setup
-3. **[TEST_USERS.md](docs/guides/TEST_USERS.md)** - Login credentials
+1. **[README.md](README.md)** - Project overview, quick start, **12 rule types**, blocklists, async processing
+2. **[GETTING_STARTED.md](GETTING_STARTED.md)** - Complete setup guide with one-command startup
+3. **[KEYCLOAK_QUICKSTART.md](docs/guides/KEYCLOAK_QUICKSTART.md)** - 5-minute authentication setup
+4. **[TEST_USERS.md](docs/guides/TEST_USERS.md)** - Login credentials
 
 ---
 
 ## 📖 Core Documentation
 
 ### System Architecture
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete system design, components, technology stack
-- **[docs/RISK_SCORE_CALCULATION.md](docs/RISK_SCORE_CALCULATION.md)** - How risk scores are calculated for each rule type
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete system design, 12 rule types, blocklists, async processing
+- **[docs/RISK_SCORE_CALCULATION.md](docs/RISK_SCORE_CALCULATION.md)** - How risk scores are calculated (100 for blocklists, 50-95 for other rules)
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Setup guide, test data, troubleshooting
 
 ### Observability & Monitoring
 - **[docs/guides/OBSERVABILITY.md](docs/guides/OBSERVABILITY.md)** - Grafana Loki setup, LogQL queries, dashboard usage ⚡ NEW
@@ -63,12 +65,12 @@ Located in `docs/adr/`:
 ## 🔧 Component Documentation
 
 ### Backend (fraud-rule-engine-api)
-- **[fraud-rule-engine-api/README.md](fraud-rule-engine-api/README.md)** - API endpoints, request/response examples
+- **[fraud-rule-engine-api/README.md](fraud-rule-engine-api/README.md)** - API endpoints (including blocklists), 12 rule types, async processing
 - **[fraud-rule-engine-api/CONFIGURATION.md](fraud-rule-engine-api/CONFIGURATION.md)** - Configuration reference, environment variables
 - **[fraud-rule-engine-api/KAFKA_ERROR_HANDLING.md](fraud-rule-engine-api/KAFKA_ERROR_HANDLING.md)** - Kafka DLQ setup, error handling
 
 ### Frontend (fraud-rule-engine-ui)
-- **[fraud-rule-engine-ui/README.md](fraud-rule-engine-ui/README.md)** - UI setup, development, build
+- **[fraud-rule-engine-ui/README.md](fraud-rule-engine-ui/README.md)** - UI setup with blocklists page, development, build
 
 ---
 
@@ -76,6 +78,7 @@ Located in `docs/adr/`:
 
 - **[docs/guides/SESSION_SUMMARY_2026-06-09.md](docs/guides/SESSION_SUMMARY_2026-06-09.md)** - Keycloak implementation session (June 9, 2026)
 - **[docs/guides/SESSION_SUMMARY_2026-06-10.md](docs/guides/SESSION_SUMMARY_2026-06-10.md)** - Production readiness refactoring: Exception handling, structured logging, Grafana Loki observability (June 10, 2026) ⚡
+- **[docs/guides/SESSION_SUMMARY_2026-06-11.md](docs/guides/SESSION_SUMMARY_2026-06-11.md)** - Blocklists & async processing: 12 rule types, customer/merchant blocklists, async thread pool (June 11, 2026) ⚡ NEW
 
 ---
 
@@ -114,7 +117,10 @@ Located in `docs/adr/`:
 → Read **[docs/guides/KEYCLOAK_SETUP.md](docs/guides/KEYCLOAK_SETUP.md)** Production Considerations section
 
 #### Add New Rule Type
-→ Read **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** Extension Points section
+→ Read **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** Extension Points section (12 types already implemented)
+
+#### Manage Blocklists
+→ Use the **Blocklists page** at http://localhost:3000/dashboard/blocklists or the API at `/api/v1/blocklists`
 
 #### Integrate with AD/LDAP
 → Read **[docs/guides/KEYCLOAK_SETUP.md](docs/guides/KEYCLOAK_SETUP.md)** AD/LDAP Federation section
@@ -274,18 +280,20 @@ docker-compose build fraud-api && docker-compose up -d fraud-api
 
 | Area | Status | Key Documents |
 |------|--------|---------------|
-| **System Overview** | ✅ Complete | README.md, ARCHITECTURE.md |
+| **System Overview** | ✅ Complete | README.md, ARCHITECTURE.md, GETTING_STARTED.md |
 | **Authentication** | ✅ Complete | KEYCLOAK_*.md, TEST_USERS.md |
-| **Observability** | ✅ Complete | SESSION_SUMMARY_2026-06-10.md ⚡ NEW |
+| **Blocklists** | ✅ Complete | README.md, API docs, SESSION_SUMMARY_2026-06-11.md ⚡ NEW |
+| **Async Processing** | ✅ Complete | ARCHITECTURE.md, SESSION_SUMMARY_2026-06-11.md ⚡ NEW |
+| **Observability** | ✅ Complete | SESSION_SUMMARY_2026-06-10.md |
 | **Development** | ✅ Complete | DEVELOPMENT.md |
-| **Risk Scoring** | ✅ Complete | RISK_SCORE_CALCULATION.md |
-| **Database** | ✅ Complete | database/SCHEMA.md |
-| **API** | ✅ Complete | fraud-rule-engine-api/README.md |
+| **Risk Scoring** | ✅ Complete | RISK_SCORE_CALCULATION.md (12 rule types) |
+| **Database** | ✅ Complete | database/SCHEMA.md (with blocklists) |
+| **API** | ✅ Complete | fraud-rule-engine-api/README.md (12 types + blocklists) |
 | **Frontend** | ✅ Complete | fraud-rule-engine-ui/README.md |
 | **Design** | ✅ Complete | design/CAPITEC_THEME.md |
 | **ADRs** | ✅ Complete | 5 ADRs documented |
-| **Exception Handling** | ✅ Complete | Code examples in SESSION_SUMMARY_2026-06-10.md ⚡ NEW |
-| **Troubleshooting** | ✅ Complete | In DEVELOPMENT.md, KEYCLOAK_SETUP.md |
+| **Exception Handling** | ✅ Complete | Code examples in SESSION_SUMMARY_2026-06-10.md |
+| **Troubleshooting** | ✅ Complete | In DEVELOPMENT.md, KEYCLOAK_SETUP.md, GETTING_STARTED.md |
 
 ---
 
@@ -311,6 +319,6 @@ docker-compose build fraud-api && docker-compose up -d fraud-api
 
 ---
 
-**Last Updated:** June 9, 2026  
+**Last Updated:** June 11, 2026  
 **Maintained By:** Development Team  
-**Total Documentation:** ~100KB across 20+ files
+**Total Documentation:** ~120KB across 21+ files
