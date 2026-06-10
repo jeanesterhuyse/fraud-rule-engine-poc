@@ -26,7 +26,7 @@ class RuleRepositoryTest {
     void shouldFindEnabledRules_orderedByPriorityDesc() {
         // Given
         createRule("Rule1", RuleType.AMOUNT_THRESHOLD, true, 100);
-        createRule("Rule2", RuleType.VELOCITY, true, 200);
+        createRule("Rule2", RuleType.CUSTOMER_BLOCKLIST, true, 200);
         createRule("Rule3", RuleType.MERCHANT_RISK, false, 150);
 
         // When
@@ -42,7 +42,7 @@ class RuleRepositoryTest {
     void shouldCountEnabledRules() {
         // Given
         createRule("Rule1", RuleType.AMOUNT_THRESHOLD, true, 100);
-        createRule("Rule2", RuleType.VELOCITY, true, 200);
+        createRule("Rule2", RuleType.GEOGRAPHIC_ANOMALY, true, 200);
         createRule("Rule3", RuleType.MERCHANT_RISK, false, 150);
 
         // When

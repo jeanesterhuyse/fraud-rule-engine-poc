@@ -26,7 +26,8 @@ class AmountThresholdRuleEvaluatorTest {
     @Test
     void shouldSupport_AmountThresholdRuleType() {
         assertThat(evaluator.supports(RuleType.AMOUNT_THRESHOLD)).isTrue();
-        assertThat(evaluator.supports(RuleType.VELOCITY)).isFalse();
+        assertThat(evaluator.supports(RuleType.CUSTOMER_BLOCKLIST)).isFalse();
+        assertThat(evaluator.supports(RuleType.MERCHANT_RISK)).isFalse();
     }
 
     @Test
