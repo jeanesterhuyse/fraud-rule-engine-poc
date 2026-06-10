@@ -1,0 +1,30 @@
+# Maven
+.mvn/
+# target/ - DO NOT IGNORE - we need the JAR from target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Test resources
+src/test/

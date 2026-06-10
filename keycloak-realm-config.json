@@ -1,0 +1,143 @@
+{
+  "realm": "fraud-detection",
+  "enabled": true,
+  "displayName": "Fraud Detection System",
+  "displayNameHtml": "<div class=\"kc-logo-text\"><span>Fraud Detection</span></div>",
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 36000,
+  "ssoSessionMaxLifespan": 86400,
+  "roles": {
+    "realm": [
+      {
+        "name": "fraud_analyst",
+        "description": "Fraud analyst with full access to fraud detection system"
+      },
+      {
+        "name": "fraud_viewer",
+        "description": "Read-only access to fraud detection system"
+      },
+      {
+        "name": "raas_consumer",
+        "description": "Consumer of RaaS (Rules as a Service)"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "fraud-rule-engine-api",
+      "name": "Fraud Rule Engine API",
+      "description": "Backend API for fraud detection",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "access.token.lifespan": "3600"
+      }
+    },
+    {
+      "clientId": "fraud-rule-engine-ui",
+      "name": "Fraud Rule Engine UI",
+      "description": "Frontend application for fraud detection",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:3001/*",
+        "http://localhost:3000/callback",
+        "http://localhost:3001/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3001"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:3001/*"
+      },
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "john.smith",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "John",
+      "lastName": "Smith",
+      "email": "john.smith@capitec.co.za",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "FraudDetect123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "fraud_analyst",
+        "raas_consumer"
+      ],
+      "attributes": {
+        "department": ["Fraud Prevention"],
+        "employee_id": ["EMP12345"],
+        "region": ["South Africa"]
+      }
+    },
+    {
+      "username": "sarah.jones",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Sarah",
+      "lastName": "Jones",
+      "email": "sarah.jones@capitec.co.za",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ViewOnly123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "fraud_viewer",
+        "raas_consumer"
+      ],
+      "attributes": {
+        "department": ["Compliance"],
+        "employee_id": ["EMP67890"],
+        "region": ["South Africa"]
+      }
+    },
+    {
+      "username": "admin.user",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@capitec.co.za",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "fraud_analyst",
+        "raas_consumer"
+      ],
+      "attributes": {
+        "department": ["IT Security"],
+        "employee_id": ["ADMIN001"],
+        "region": ["South Africa"]
+      }
+    }
+  ]
+}

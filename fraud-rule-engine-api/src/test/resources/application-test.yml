@@ -1,0 +1,56 @@
+# Test configuration
+
+spring:
+  datasource:
+    # Use H2 in-memory database for tests
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    # Testcontainers will override bootstrap-servers
+    consumer:
+      auto-offset-reset: earliest
+    producer:
+      acks: all
+
+  flyway:
+    enabled: true
+    clean-disabled: false
+
+app:
+  jwt:
+    secret: TestSecretKeyForJWTTokenGenerationInTestEnvironment
+    expiration-ms: 3600000  # 1 hour for tests
+
+  kafka:
+    topics:
+      transactions: test-fraud-transactions
+      dlq: test-fraud-transactions-dlq
+    auto-create: true
+
+  mock-producer:
+    enabled: false  # Disabled in tests
+
+spring:
+  kafka:
+    enabled: false  # Disable Kafka auto-config in tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+logging:
+  level:
+    root: WARN
+    com.fraud.ruleengine: DEBUG
+    org.springframework.test: INFO
+    org.testcontainers: INFO

@@ -1,0 +1,64 @@
+# Docker Compose local development configuration
+# Run with: mvn spring-boot:run -Dspring-boot.run.profiles=docker
+# Or in Docker: docker run -e SPRING_PROFILES_ACTIVE=docker
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/fraud_rule_engine
+    username: fraud_user
+    password: fraud_pass
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    # Docker Compose Kafka (local)
+    bootstrap-servers: kafka:9092
+    admin:
+      properties:
+        bootstrap.servers: kafka:9092
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Backend uses keycloak:8080 to fetch JWK keys (Docker internal network)
+          jwk-set-uri: http://keycloak:8080/realms/fraud-detection/protocol/openid-connect/certs
+          # But we don't set issuer-uri here - SecurityConfig will handle issuer validation
+
+# Logging configuration is in logback-spring.xml (structured JSON)
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:DockerLocalSecretKeyForJWTTokenGeneration}
+    expiration-ms: 86400000
+
+  kafka:
+    topics:
+      transactions: fraud-transactions-jeanTest
+      dlq: fraud-transactions-dlq-jeanTest
+    auto-create: true  # Auto-create topics in local Docker Kafka
+    msk-iam-auth:
+      enabled: false  # Disable IAM auth for local Docker Kafka
+
+  mock-producer:
+    enabled: true
+    interval-ms: 10000  # Every 10 seconds
+
+  cors:
+    allowed-origins: http://localhost:3000
+    allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+
+auth:
+  resource-server:
+    protectedPaths: ['/api/v1/**']
+    allowedRoles: ['RAAS_CONSUMER', 'raas_consumer']

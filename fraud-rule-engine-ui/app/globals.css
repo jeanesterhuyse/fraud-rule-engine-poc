@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Capitec Design System Theme */
+@import './theme.css';
+
+/* Base Layer - Apply Capitec design system defaults */
+@layer base {
+  /* Reset and base styles */
+  * {
+    @apply border-cap-border;
+  }
+
+  body {
+    @apply bg-cap-background text-cap-text font-sans antialiased;
+  }
+
+  /* Typography defaults */
+  h1 {
+    @apply text-2xl font-bold text-cap-deep-blue;
+  }
+
+  h2 {
+    @apply text-xl font-semibold text-cap-deep-blue;
+  }
+
+  h3 {
+    @apply text-lg font-semibold text-cap-deep-blue-800;
+  }
+
+  /* Link styles */
+  a {
+    @apply text-cap-blue hover:text-cap-blue-600 transition-colors duration-200;
+  }
+
+  /* Button reset */
+  button {
+    @apply transition-all duration-200;
+  }
+}
+
+/* Components Layer - Custom component classes */
+@layer components {
+  /* Card components using Capitec style */
+  .card {
+    @apply bg-cap-white rounded-card shadow-card p-6 transition-shadow duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-card-hover;
+  }
+
+  /* Button variants */
+  .btn {
+    @apply px-5 py-2.5 rounded-btn font-semibold transition-colors duration-200 cursor-pointer text-sm;
+  }
+
+  .btn-primary {
+    @apply bg-cap-deep-blue text-white hover:bg-cap-deep-blue-700 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-cap-grey-300 text-cap-deep-blue hover:bg-cap-grey-400 border border-cap-grey-400;
+  }
+
+  .btn-success {
+    @apply bg-cap-red text-white hover:bg-cap-red-600 shadow-sm hover:shadow-md;
+  }
+
+  .btn-error {
+    @apply bg-white text-cap-red border border-cap-red hover:bg-cap-red hover:text-white;
+  }
+
+  .btn-outline {
+    @apply bg-white border border-cap-deep-blue text-cap-deep-blue hover:bg-cap-deep-blue-50;
+  }
+
+  /* Panel/Section containers */
+  .panel {
+    @apply bg-cap-white rounded-panel shadow-panel p-4 mb-6;
+  }
+
+  .panel-header {
+    @apply flex justify-between items-center mb-3 text-lg font-semibold text-cap-deep-blue;
+  }
+
+  /* Table styles */
+  .table-header {
+    @apply bg-cap-grey-200 font-semibold text-sm text-cap-deep-blue border-b border-cap-grey-500;
+  }
+
+  .table-row {
+    @apply border-b border-cap-border transition-colors duration-200;
+  }
+
+  .table-row:hover {
+    @apply bg-blue-50;
+  }
+
+  /* Badge/Tag styles */
+  .badge {
+    @apply inline-block px-2.5 py-1 rounded text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-cap-deep-blue text-white;
+  }
+
+  .badge-secondary {
+    @apply bg-cap-grey-300 text-cap-deep-blue border border-cap-grey-400;
+  }
+
+  .badge-success {
+    @apply bg-cap-red/10 text-cap-red border border-cap-red/20 font-bold;
+  }
+
+  .badge-info {
+    @apply bg-cap-cyan/10 text-cap-cyan-700 border border-cap-cyan/20;
+  }
+
+  .badge-warning {
+    @apply bg-orange-100 text-orange-700 border border-orange-200;
+  }
+
+  .badge-error {
+    @apply bg-cap-red/10 text-cap-red border border-cap-red/20;
+  }
+
+  .badge-neutral {
+    @apply bg-cap-grey-200 text-cap-text-muted border border-cap-grey-300;
+  }
+
+  .badge-blue {
+    @apply bg-cap-blue/10 text-cap-blue-700 border border-cap-blue/20;
+  }
+
+  .badge-purple {
+    @apply bg-purple-100 text-purple-700 border border-purple-200;
+  }
+
+  .badge-outline {
+    @apply border border-cap-border text-cap-text;
+  }
+
+  /* Form elements */
+  .input {
+    @apply px-2.5 py-1.5 border border-cap-grey-500 rounded text-sm transition-all duration-200;
+    @apply focus:outline-none focus:border-cap-blue focus:ring-2 focus:ring-cap-blue/10;
+  }
+
+  .textarea {
+    @apply px-2.5 py-1.5 border border-cap-grey-500 rounded text-sm transition-all duration-200;
+    @apply focus:outline-none focus:border-cap-blue focus:ring-2 focus:ring-cap-blue/10;
+  }
+
+  .select {
+    @apply px-2.5 py-1.5 border border-cap-grey-500 rounded text-sm bg-white transition-all duration-200;
+    @apply focus:outline-none focus:border-cap-blue focus:ring-2 focus:ring-cap-blue/10;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-cap-text mb-1;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply inline-block w-4 h-4 border-2 border-cap-grey-400 border-t-cap-blue rounded-full animate-spin;
+  }
+
+  .spinner-lg {
+    @apply inline-block w-8 h-8 border-2 border-cap-grey-400 border-t-cap-blue rounded-full animate-spin;
+  }
+}
+
+/* Utilities Layer - Custom utility classes */
+@layer utilities {
+  /* Text color utilities */
+  .text-muted {
+    @apply text-cap-text-muted;
+  }
+
+  /* Animation utilities */
+  .fade-up {
+    @apply animate-fade-up;
+  }
+
+  /* Custom shadows */
+  .shadow-soft {
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  }
+}
+

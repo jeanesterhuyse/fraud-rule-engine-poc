@@ -1,0 +1,298 @@
+/**
+ * Capitec / Fraud-Tyr Design System Theme
+ * Source: capitecbankltd/fraud_fincrime-portal-ui
+ *
+ * This file contains CSS custom properties (variables) for the Capitec design system.
+ * These variables work alongside Tailwind's utility classes.
+ */
+
+:root {
+  /* ==================== Brand Colors ==================== */
+  --cap-red: #e41c23;
+  --cap-accent-blue: #2f70ef;
+  --cap-deep-blue: #004973;
+  --cap-cyan: #00a1e1;
+
+  /* ==================== Neutral Colors ==================== */
+  --capitec-grey: #f7f7f7;
+  --capitec-white: #ffffff;
+  --capitec-dark: #3a3a3a;
+  --neutral-700: #6c757d;
+
+  /* ==================== Semantic Colors ==================== */
+  --color-primary: #2f70ef;
+  --color-primary-dark: #004973;
+  --color-primary-hover: #0080c0;
+  --color-info: #2f70ef;
+  --color-success: #e41c23;    /* Note: Uses Capitec red, not green! */
+  --color-alert: #1d4ba6;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+
+  /* ==================== Surface & Background ==================== */
+  --color-background: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-text: #3a3a3a;
+  --color-text-muted: #6c757d;
+  --color-border: #e1e1e1;
+  --color-border-light: #e9edf3;
+
+  /* ==================== Typography ==================== */
+  --font-family-base: 'NunitoSans', 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;       /* 16px */
+  --font-size-lg: 1.25rem;      /* 20px */
+  --font-size-xl: 1.8rem;       /* 28.8px */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ==================== Spacing ==================== */
+  --space-xs: 0.25rem;   /* 4px */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 1rem;      /* 16px */
+  --space-lg: 1.5rem;    /* 24px */
+  --space-xl: 2rem;      /* 32px */
+  --space-2xl: 3rem;     /* 48px */
+
+  /* ==================== Border & Radius ==================== */
+  --border-radius-sm: 4px;
+  --border-radius: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 10px;
+  --border-radius-xl: 12px;
+  --border-radius-2xl: 14px;
+
+  /* ==================== Shadows ==================== */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12);
+  --shadow-2xl: 0 30px 60px rgba(187, 187, 187, 0.6);
+  --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 30px 60px rgba(187, 187, 187, 0.6);
+
+  /* ==================== Transitions ==================== */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-animation: 0.6s ease forwards;
+}
+
+/* ==================== Base Styles ==================== */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+}
+
+/* ==================== Component Classes ==================== */
+
+/* Cards */
+.cap-card {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  transition: box-shadow var(--transition-base);
+}
+
+.cap-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.cap-card-soft {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-xl);
+  background: var(--color-surface);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+/* Card variants */
+.cap-card-info {
+  border-top: 4px solid var(--color-info);
+}
+
+.cap-card-success {
+  border-top: 4px solid var(--color-success);
+}
+
+.cap-card-alert {
+  border-top: 4px solid var(--color-alert);
+}
+
+/* Buttons */
+.cap-btn-primary {
+  background-color: var(--color-primary-dark);
+  color: var(--color-surface);
+  font-weight: var(--font-weight-semibold);
+  padding: 0.5rem 1.125rem;
+  border-radius: var(--border-radius);
+  border: none;
+  transition: background-color var(--transition-base);
+  cursor: pointer;
+}
+
+.cap-btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.cap-btn-secondary {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  font-weight: var(--font-weight-semibold);
+  padding: 0.5rem 1.125rem;
+  border-radius: var(--border-radius);
+  border: none;
+  transition: background-color var(--transition-base);
+  cursor: pointer;
+}
+
+.cap-btn-secondary:hover {
+  background-color: var(--cap-accent-blue);
+  opacity: 0.9;
+}
+
+/* Panels */
+.cap-panel {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.125rem;
+  margin-bottom: 1.5rem;
+}
+
+.cap-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-dark);
+}
+
+/* Tables */
+.cap-table-header {
+  background: #f0f4f8;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-dark);
+  border-bottom: 1px solid #cdd4e0;
+}
+
+.cap-table-row:hover {
+  background-color: #f2f8ff;
+  transition: background-color var(--transition-fast);
+}
+
+/* Tags/Badges */
+.cap-tag {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--border-radius);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-surface);
+}
+
+.cap-tag-primary {
+  background-color: var(--color-primary-dark);
+}
+
+.cap-tag-secondary {
+  background-color: var(--color-primary);
+}
+
+.cap-tag-info {
+  background-color: var(--color-info);
+}
+
+.cap-tag-success {
+  background-color: var(--color-success);
+}
+
+/* Forms */
+.cap-input {
+  padding: 0.375rem 0.625rem;
+  border-radius: var(--border-radius);
+  border: 1px solid #cdd4e0;
+  font-size: var(--font-size-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.cap-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(47, 112, 239, 0.1);
+}
+
+/* Page Headers */
+.cap-page-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--cap-deep-blue);
+  margin-bottom: 1.5rem;
+}
+
+.cap-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-dark);
+  margin-bottom: 1rem;
+}
+
+/* Text Utilities */
+.cap-text-muted {
+  color: var(--color-text-muted);
+}
+
+.cap-text-primary {
+  color: var(--color-primary);
+}
+
+.cap-text-success {
+  color: var(--color-success);
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cap-fade-up {
+  animation: fadeUp var(--transition-animation);
+}
+
+.cap-fade-stagger {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp var(--transition-animation);
+  animation-delay: calc(var(--stagger-index, 0) * 0.1s);
+}
+
+/* Loading States */
+.cap-loading {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

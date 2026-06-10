@@ -1,0 +1,16 @@
+'use client';
+
+// This page has been deleted - authentication removed from POC
+// Redirects to dashboard
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push('/dashboard');
+  }, [router]);
+
+  return null;
+}
