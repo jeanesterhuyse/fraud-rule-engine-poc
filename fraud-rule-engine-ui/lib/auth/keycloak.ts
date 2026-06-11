@@ -35,16 +35,11 @@ export const initKeycloak = async (): Promise<boolean> => {
     });
 
     if (authenticated) {
-      console.log('User is authenticated');
-      // Setup token refresh
       setupTokenRefresh(keycloak);
-    } else {
-      console.log('User is not authenticated');
     }
 
     return authenticated;
   } catch (error) {
-    console.error('Failed to initialize Keycloak:', error);
     return false;
   }
 };
@@ -52,15 +47,10 @@ export const initKeycloak = async (): Promise<boolean> => {
 // Setup automatic token refresh
 const setupTokenRefresh = (keycloak: Keycloak) => {
   setInterval(() => {
-    keycloak.updateToken(70).then((refreshed) => {
-      if (refreshed) {
-        console.log('Token refreshed');
-      }
-    }).catch(() => {
-      console.error('Failed to refresh token');
+    keycloak.updateToken(70).catch(() => {
       keycloak.logout();
     });
-  }, 60000); // Check every 60 seconds
+  }, 60000);
 };
 
 // Login function

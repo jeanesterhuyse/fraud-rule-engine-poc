@@ -9,21 +9,16 @@ export function ProtectedPage({ children }: { children: React.ReactNode }) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = () => {
       const token = TokenManager.getAccessToken();
-      console.log('ProtectedPage: Checking auth, token exists:', !!token);
 
       if (!token) {
-        console.log('ProtectedPage: No token found, redirecting to login');
         router.push('/login-keycloak');
       } else {
-        console.log('ProtectedPage: Token found, showing page');
         setIsChecking(false);
       }
     };
 
-    // Small delay to ensure token is saved
     setTimeout(checkAuth, 100);
   }, [router]);
 

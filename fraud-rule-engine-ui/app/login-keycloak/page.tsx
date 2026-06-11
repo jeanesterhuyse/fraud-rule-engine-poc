@@ -12,8 +12,6 @@ export default function LoginPage() {
 
     // Generate PKCE parameters
     const { codeVerifier, codeChallenge } = await generatePKCE();
-    console.log('PKCE generated - code verifier stored');
-    console.log('Code challenge:', codeChallenge.substring(0, 20) + '...');
     storeCodeVerifier(codeVerifier);
 
     // Build the Keycloak authorization URL with PKCE

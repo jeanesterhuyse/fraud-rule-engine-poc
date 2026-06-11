@@ -57,7 +57,6 @@ export default function TransactionsPage() {
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to load transactions');
-      console.error('Transactions error:', err);
     } finally {
       setLoading(false);
     }
