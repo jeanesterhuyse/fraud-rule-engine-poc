@@ -27,8 +27,9 @@ npm run dev
 ```
 
 **Login:** http://localhost:3000/login-keycloak
-- Username: `john.smith`
-- Password: `FraudDetect123!`
+- **Fraud Analyst (Full Access):** `john.smith` / `FraudDetect123!`
+- **Fraud Viewer (Read-Only):** `sarah.jones` / `ViewOnly123!`
+- **Admin (Full Access):** `admin.user` / `Admin123!`
 
 > 📚 **New to the project?** See **[GETTING_STARTED.md](GETTING_STARTED.md)** for complete setup instructions, test users, and troubleshooting.
 
@@ -110,15 +111,15 @@ Located in `/docs/adr/`:
 - ✅ **Customer & merchant blocklists** with instant blocking (risk score 100)
 - ✅ **Async processing architecture** for scalability (custom thread pool)
 - ✅ **Keycloak OAuth2/OIDC authentication** (AD-ready)
+- ✅ **Role-based access control (RBAC)** - fraud_analyst/admin (full access), fraud_viewer (read-only)
 - ✅ **Enterprise observability with Grafana Loki** (structured JSON logging)
 - ✅ **Automated database initialization** (Keycloak DB auto-created)
 - ✅ **Custom exception handling** with consistent error responses
 - ✅ Professional Capitec-branded UI with logo and blocklists management
-- ✅ RESTful API with JWT token validation
+- ✅ RESTful API with JWT token validation and role enforcement
 - ✅ Audit trail preservation (transactions kept when rules deleted)
 - ✅ Error handling with Dead Letter Queue (DLQ)
-- ✅ Role-based access control (fraud_analyst, fraud_viewer)
-- ✅ **Comprehensive test suite** (54 unit tests, 8 optional integration tests)
+- ✅ **Comprehensive test suite** (62 unit tests, 8 optional integration tests)
 - ✅ **Production-ready code quality** (clean, self-documenting)
 
 ---

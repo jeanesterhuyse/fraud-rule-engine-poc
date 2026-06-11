@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react';
 import { blocklistApi } from '@/lib/api/blocklists';
 import { BlockedCustomer, BlockedMerchant, BlockCustomerRequest, BlockMerchantRequest } from '@/types/blocklist';
+import { useKeycloakAuth } from '@/contexts/KeycloakAuthContext';
 
 export default function BlocklistsPage() {
+  const { hasRole } = useKeycloakAuth();
+  const canEdit = hasRole('fraud_analyst') || hasRole('admin');
+
   const [activeTab, setActiveTab] = useState<'customers' | 'merchants'>('customers');
   const [customers, setCustomers] = useState<BlockedCustomer[]>([]);
   const [merchants, setMerchants] = useState<BlockedMerchant[]>([]);
@@ -83,14 +87,17 @@ export default function BlocklistsPage() {
           <h1 className="text-2xl font-bold text-cap-deep-blue">Blocklists</h1>
           <p className="text-cap-text-muted mt-1">
             Manage blocked customers and merchants for instant fraud prevention
+            {!canEdit && <span className="text-cap-orange ml-2">(Read-only access)</span>}
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary"
-        >
-          + Add Block
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary"
+          >
+            + Add Block
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -200,12 +207,16 @@ export default function BlocklistsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleUnblockCustomer(customer.customerId)}
-                          className="text-cap-blue hover:text-cap-blue-600 font-medium"
-                        >
-                          Unblock
-                        </button>
+                        {canEdit ? (
+                          <button
+                            onClick={() => handleUnblockCustomer(customer.customerId)}
+                            className="text-cap-blue hover:text-cap-blue-600 font-medium"
+                          >
+                            Unblock
+                          </button>
+                        ) : (
+                          <span className="text-cap-text-muted text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -283,12 +294,16 @@ export default function BlocklistsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleUnblockMerchant(merchant.merchantName)}
-                          className="text-cap-blue hover:text-cap-blue-600 font-medium"
-                        >
-                          Unblock
-                        </button>
+                        {canEdit ? (
+                          <button
+                            onClick={() => handleUnblockMerchant(merchant.merchantName)}
+                            className="text-cap-blue hover:text-cap-blue-600 font-medium"
+                          >
+                            Unblock
+                          </button>
+                        ) : (
+                          <span className="text-cap-text-muted text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}

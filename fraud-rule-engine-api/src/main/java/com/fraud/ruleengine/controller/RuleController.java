@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,12 +39,14 @@ public class RuleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public ResponseEntity<Rule> createRule(@Valid @RequestBody Rule rule) {
         Rule createdRule = ruleService.create(rule);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRule);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public ResponseEntity<Rule> updateRule(
         @PathVariable Long id,
         @Valid @RequestBody Rule rule
@@ -53,18 +56,21 @@ public class RuleController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRule(@PathVariable Long id) {
         ruleService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/enable")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public ResponseEntity<Rule> enableRule(@PathVariable Long id) {
         Rule rule = ruleService.enable(id);
         return ResponseEntity.ok(rule);
     }
 
     @PatchMapping("/{id}/disable")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public ResponseEntity<Rule> disableRule(@PathVariable Long id) {
         Rule rule = ruleService.disable(id);
         return ResponseEntity.ok(rule);

@@ -215,24 +215,29 @@ Stores merchants on the blocklist for instant blocking (risk score 95).
 ## Security Approach
 
 ### Authentication
-- **Method:** JWT (JSON Web Tokens)
-- **Hardcoded Credentials (POC only):**
-  - Username: `test`
-  - Password: `test`
-  - Role: `raas_consumer`
-- **Token Expiration:** 24 hours
-- **Storage:** Frontend stores JWT in localStorage (acceptable for POC)
+- **Method:** Keycloak OAuth2/OIDC with JWT tokens
+- **Test Users:**
+  - `john.smith` / `FraudDetect123!` (fraud_analyst)
+  - `sarah.jones` / `ViewOnly123!` (fraud_viewer)
+  - `admin.user` / `Admin123!` (admin)
+- **Token Expiration:** Configurable in Keycloak (default: 5 minutes with refresh)
+- **Token Refresh:** Automatic via Keycloak JavaScript adapter
 
-### Authorization
-- **All API endpoints** (except `/api/v1/auth/login`) require authentication
-- **Role-based access:** All authenticated users have `raas_consumer` role
+### Authorization (RBAC)
+- **All API endpoints** (except health checks) require authentication
+- **Role-based access control:**
+  - `fraud_analyst` and `admin`: Full access (create/edit/delete)
+  - `fraud_viewer`: Read-only access (view only)
+- **Backend enforcement:** `@PreAuthorize` annotations on write operations
+- **Frontend enforcement:** Conditional UI rendering based on roles
 - **CORS:** Configured to allow requests from `http://localhost:3000`
 
 ### Production Considerations
-- Replace hardcoded credentials with OAuth2/OIDC provider
-- Use refresh tokens
-- Store tokens in HTTP-only secure cookies
-- Implement granular role-based permissions
+- Integrate Keycloak with corporate Active Directory/LDAP
+- Use refresh tokens with rotation
+- Enable multi-factor authentication (MFA)
+- Implement rate limiting per user/role
+- Enhanced audit logging with user tracking
 
 ---
 
@@ -314,6 +319,24 @@ public class AmountThresholdRuleEvaluator implements RuleEvaluationStrategy { ..
 - Leverages Java 21's virtual thread capabilities
 
 **Trade-off:** Added complexity in error handling and monitoring. Mitigated by comprehensive logging.
+
+---
+
+### 6. Role-Based Access Control (RBAC)
+**Decision:** Enforce role-based permissions on both backend API and frontend UI.
+
+**Implementation:**
+- Backend: `@PreAuthorize` annotations on controller methods
+- Frontend: Conditional rendering based on user roles via `useKeycloakAuth()` hook
+- Roles: `fraud_analyst`, `fraud_viewer`, `admin`
+
+**Why:**
+- Security best practice - principle of least privilege
+- Audit compliance - viewers cannot accidentally modify data
+- Enterprise-ready - mirrors real-world fraud operations teams
+- Keycloak integration provides centralized role management
+
+**Trade-off:** Slightly more complex UI logic. Mitigated by reusable auth context.
 
 ---
 

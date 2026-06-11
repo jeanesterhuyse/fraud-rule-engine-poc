@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,12 +36,14 @@ public class BlocklistController {
     }
 
     @PostMapping("/customers")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public CompletableFuture<ResponseEntity<BlockedCustomer>> blockCustomer(@Valid @RequestBody BlockCustomerRequest request) {
         return blocklistService.blockCustomer(request)
             .thenApply(blocked -> ResponseEntity.status(HttpStatus.CREATED).body(blocked));
     }
 
     @DeleteMapping("/customers/{customerId}")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public CompletableFuture<ResponseEntity<Void>> unblockCustomer(@PathVariable String customerId) {
         return blocklistService.unblockCustomer(customerId)
             .thenApply(v -> ResponseEntity.noContent().<Void>build());
@@ -55,12 +58,14 @@ public class BlocklistController {
     }
 
     @PostMapping("/merchants")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public CompletableFuture<ResponseEntity<BlockedMerchant>> blockMerchant(@Valid @RequestBody BlockMerchantRequest request) {
         return blocklistService.blockMerchant(request)
             .thenApply(blocked -> ResponseEntity.status(HttpStatus.CREATED).body(blocked));
     }
 
     @DeleteMapping("/merchants/{merchantName}")
+    @PreAuthorize("hasRole('FRAUD_ANALYST') or hasRole('ADMIN')")
     public CompletableFuture<ResponseEntity<Void>> unblockMerchant(@PathVariable String merchantName) {
         return blocklistService.unblockMerchant(merchantName)
             .thenApply(v -> ResponseEntity.noContent().<Void>build());

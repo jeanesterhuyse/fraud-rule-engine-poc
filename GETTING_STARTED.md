@@ -52,9 +52,11 @@ Open your browser and navigate to:
 
 | Role | Username | Password | Permissions |
 |------|----------|----------|-------------|
-| **Fraud Analyst** | `john.smith` | `FraudDetect123!` | Full access - create/edit/delete rules |
-| **Fraud Viewer** | `sarah.jones` | `ViewOnly123!` | Read-only access |
-| **Admin** | `admin.user` | `Admin123!` | Full access |
+| **Fraud Analyst** | `john.smith` | `FraudDetect123!` | Full access - create/edit/delete rules and blocklists |
+| **Fraud Viewer** | `sarah.jones` | `ViewOnly123!` | **Read-only access** - can view all data but cannot modify |
+| **Admin** | `admin.user` | `Admin123!` | Full access - same as Fraud Analyst |
+
+> **Note:** Role-based access control (RBAC) is enforced on both backend API and frontend UI. Fraud Viewers will see "(Read-only access)" indicators and all create/edit/delete buttons are hidden.
 
 ---
 

@@ -1,5 +1,11 @@
 'use client';
 
+import { KeycloakAuthProvider } from '@/contexts/KeycloakAuthContext';
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <KeycloakAuthProvider>
+      {children}
+    </KeycloakAuthProvider>
+  );
 }
