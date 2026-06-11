@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { blocklistApi } from '@/lib/api/blocklists';
 import { BlockedCustomer, BlockedMerchant, BlockCustomerRequest, BlockMerchantRequest } from '@/types/blocklist';
-import { useKeycloakAuth } from '@/contexts/KeycloakAuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function BlocklistsPage() {
-  const { hasRole } = useKeycloakAuth();
-  const canEdit = hasRole('fraud_analyst') || hasRole('admin');
+  const { canEdit } = usePermissions();
 
   const [activeTab, setActiveTab] = useState<'customers' | 'merchants'>('customers');
   const [customers, setCustomers] = useState<BlockedCustomer[]>([]);
@@ -18,6 +17,7 @@ export default function BlocklistsPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const loadData = async () => {
@@ -63,14 +63,19 @@ export default function BlocklistsPage() {
   const handleAddBlock = async (data: BlockCustomerRequest | BlockMerchantRequest) => {
     try {
       if (activeTab === 'customers') {
-        await blocklistApi.blockCustomer(data as BlockCustomerRequest);
+        if ('customerId' in data) {
+          await blocklistApi.blockCustomer(data);
+        }
       } else {
-        await blocklistApi.blockMerchant(data as BlockMerchantRequest);
+        if ('merchantName' in data) {
+          await blocklistApi.blockMerchant(data);
+        }
       }
       setShowAddModal(false);
       await loadData();
     } catch (err: any) {
       setError(`Failed to add block: ${err.message}`);
+      throw err; // Re-throw to allow modal to handle error display
     }
   };
 

@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react';
 import { rulesService } from '@/lib/api/rules';
 import { Rule } from '@/types/api';
 import RuleEditModal from '@/components/RuleEditModal';
-import { useKeycloakAuth } from '@/contexts/KeycloakAuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function RulesPage() {
-  const { hasRole } = useKeycloakAuth();
-  const canEdit = hasRole('fraud_analyst') || hasRole('admin');
+  const { canEdit } = usePermissions();
 
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +17,7 @@ export default function RulesPage() {
 
   useEffect(() => {
     loadRules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadRules = async () => {
@@ -55,13 +55,23 @@ export default function RulesPage() {
   };
 
   const handleSaveEdit = async (id: number, updates: Partial<Rule>) => {
-    await rulesService.update(id, updates);
-    await loadRules();
+    try {
+      await rulesService.update(id, updates);
+      await loadRules();
+      setEditingRule(null);
+    } catch (err: any) {
+      setError(`Failed to update rule: ${err.message}`);
+    }
   };
 
   const handleCreateRule = async (ruleData: Partial<Rule>) => {
-    await rulesService.create(ruleData);
-    await loadRules();
+    try {
+      await rulesService.create(ruleData);
+      await loadRules();
+      setShowCreateModal(false);
+    } catch (err: any) {
+      setError(`Failed to create rule: ${err.message}`);
+    }
   };
 
   const handleDelete = async (rule: Rule) => {
