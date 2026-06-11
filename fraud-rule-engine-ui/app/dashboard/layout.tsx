@@ -11,6 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', current: pathname === '/dashboard' },
     { name: 'Rules', href: '/dashboard/rules', current: pathname?.startsWith('/dashboard/rules') },
+    { name: 'Blocklists', href: '/dashboard/blocklists', current: pathname?.startsWith('/dashboard/blocklists') },
     { name: 'Transactions', href: '/dashboard/transactions', current: pathname?.startsWith('/dashboard/transactions') },
   ];
 

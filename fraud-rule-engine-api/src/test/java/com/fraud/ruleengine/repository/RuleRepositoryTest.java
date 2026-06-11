@@ -3,6 +3,7 @@ package com.fraud.ruleengine.repository;
 import com.fraud.ruleengine.domain.entity.Rule;
 import com.fraud.ruleengine.domain.enums.RuleType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
+@EnabledIfEnvironmentVariable(named = "RUN_INTEGRATION_TESTS", matches = "true", disabledReason = "Integration tests require Docker and RUN_INTEGRATION_TESTS=true")
 class RuleRepositoryTest {
 
     @Autowired
@@ -26,7 +28,7 @@ class RuleRepositoryTest {
     void shouldFindEnabledRules_orderedByPriorityDesc() {
         // Given
         createRule("Rule1", RuleType.AMOUNT_THRESHOLD, true, 100);
-        createRule("Rule2", RuleType.VELOCITY, true, 200);
+        createRule("Rule2", RuleType.CUSTOMER_BLOCKLIST, true, 200);
         createRule("Rule3", RuleType.MERCHANT_RISK, false, 150);
 
         // When
@@ -42,7 +44,7 @@ class RuleRepositoryTest {
     void shouldCountEnabledRules() {
         // Given
         createRule("Rule1", RuleType.AMOUNT_THRESHOLD, true, 100);
-        createRule("Rule2", RuleType.VELOCITY, true, 200);
+        createRule("Rule2", RuleType.GEOGRAPHIC_ANOMALY, true, 200);
         createRule("Rule3", RuleType.MERCHANT_RISK, false, 150);
 
         // When

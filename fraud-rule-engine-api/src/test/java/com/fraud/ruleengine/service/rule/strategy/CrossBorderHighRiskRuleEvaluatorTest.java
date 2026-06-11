@@ -14,38 +14,37 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class AmountThresholdRuleEvaluatorTest {
+class CrossBorderHighRiskRuleEvaluatorTest {
 
-    private AmountThresholdRuleEvaluator evaluator;
+    private CrossBorderHighRiskRuleEvaluator evaluator;
 
     @BeforeEach
     void setUp() {
-        evaluator = new AmountThresholdRuleEvaluator();
+        evaluator = new CrossBorderHighRiskRuleEvaluator();
     }
 
     @Test
-    void shouldSupport_AmountThresholdRuleType() {
-        assertThat(evaluator.supports(RuleType.AMOUNT_THRESHOLD)).isTrue();
-        assertThat(evaluator.supports(RuleType.CUSTOMER_BLOCKLIST)).isFalse();
-        assertThat(evaluator.supports(RuleType.MERCHANT_RISK)).isFalse();
+    void shouldSupport_CrossBorderHighRiskRuleType() {
+        assertThat(evaluator.supports(RuleType.CROSS_BORDER_HIGH_RISK)).isTrue();
+        assertThat(evaluator.supports(RuleType.AMOUNT_THRESHOLD)).isFalse();
     }
 
     @Test
-    void shouldTrigger_whenAmountExceedsThreshold() {
-        Rule rule = createRule(new BigDecimal("10000"));
-        Transaction transaction = createTransaction(new BigDecimal("15000"));
+    void shouldTrigger_whenCrossBorderToHighRiskCountry() {
+        Rule rule = createRule("ZAF", "RUS");
+        Transaction transaction = createTransaction("RUS");
 
         Optional<RuleMatch> result = evaluator.evaluate(transaction, rule);
 
         assertThat(result).isPresent();
-        assertThat(result.get().matchReason()).contains("exceeds threshold");
-        assertThat(result.get().riskScore()).isGreaterThan(50);
+        assertThat(result.get().matchReason()).contains("Cross-border transaction to high-risk country");
+        assertThat(result.get().riskScore()).isEqualTo(90);
     }
 
     @Test
-    void shouldNotTrigger_whenAmountBelowThreshold() {
-        Rule rule = createRule(new BigDecimal("10000"));
-        Transaction transaction = createTransaction(new BigDecimal("5000"));
+    void shouldNotTrigger_whenTransactionInHomeCountry() {
+        Rule rule = createRule("ZAF", "RUS");
+        Transaction transaction = createTransaction("ZAF");
 
         Optional<RuleMatch> result = evaluator.evaluate(transaction, rule);
 
@@ -53,9 +52,9 @@ class AmountThresholdRuleEvaluatorTest {
     }
 
     @Test
-    void shouldNotTrigger_whenAmountEqualsThreshold() {
-        Rule rule = createRule(new BigDecimal("10000"));
-        Transaction transaction = createTransaction(new BigDecimal("10000"));
+    void shouldNotTrigger_whenTransactionNotInConfiguredHighRiskCountry() {
+        Rule rule = createRule("ZAF", "RUS");
+        Transaction transaction = createTransaction("USA");
 
         Optional<RuleMatch> result = evaluator.evaluate(transaction, rule);
 
@@ -63,38 +62,39 @@ class AmountThresholdRuleEvaluatorTest {
     }
 
     @Test
-    void shouldNotTrigger_whenThresholdIsNull() {
-        Rule rule = createRule(null);
-        Transaction transaction = createTransaction(new BigDecimal("15000"));
+    void shouldNotTrigger_whenConfigIsNull() {
+        Rule rule = createRule(null, "RUS");
+        Transaction transaction = createTransaction("RUS");
 
         Optional<RuleMatch> result = evaluator.evaluate(transaction, rule);
 
         assertThat(result).isEmpty();
     }
 
-    private Rule createRule(BigDecimal thresholdAmount) {
+    private Rule createRule(String customerHomeCountry, String highRiskCountry) {
         return Rule.builder()
             .id(1L)
             .name("Test Rule")
-            .ruleType(RuleType.AMOUNT_THRESHOLD)
+            .ruleType(RuleType.CROSS_BORDER_HIGH_RISK)
             .enabled(true)
-            .priority(100)
-            .thresholdAmount(thresholdAmount)
+            .priority(185)
+            .customerHomeCountry(customerHomeCountry)
+            .countryCode(highRiskCountry)
             .build();
     }
 
-    private Transaction createTransaction(BigDecimal amount) {
+    private Transaction createTransaction(String countryCode) {
         return new Transaction(
             "TXN-001",
             "ACC-001",
             "CUST-001",
-            amount,
+            new BigDecimal("5000"),
             "ZAR",
             "Test Merchant",
             "RETAIL",
             TransactionType.PURCHASE,
             LocalDateTime.now(),
-            "ZAF",
+            countryCode,
             "DEVICE-001",
             "192.168.1.1",
             "1234"

@@ -42,13 +42,19 @@ This is a proof-of-concept fraud detection system that demonstrates a production
 │             ▼                             │
 │  ┌──────────────────────────────────┐    │
 │  │   Rule Evaluation Strategies     │    │
-│  │   - AmountThreshold              │    │
-│  │   - Velocity                     │    │
-│  │   - GeographicAnomaly            │    │
-│  │   - MerchantRisk                 │    │
-│  │   - AmountRange                  │    │
-│  │   - RapidFire                    │    │
-│  │   - DormantAccount               │    │
+│  │   (12 types - async processing)  │    │
+│  │   - CustomerBlocklist (100)      │    │
+│  │   - MerchantBlocklist (95)       │    │
+│  │   - AmountThreshold (50-100)     │    │
+│  │   - GeographicAnomaly (75)       │    │
+│  │   - MerchantRisk (65)            │    │
+│  │   - AmountRange (70)             │    │
+│  │   - TimeOfDayAnomaly (60)        │    │
+│  │   - RoundAmount (55-65)          │    │
+│  │   - CnpHighRisk (60-75)          │    │
+│  │   - CurrencyMismatch (55)        │    │
+│  │   - CrossBorderHighRisk (90)     │    │
+│  │   - LargeWithdrawal (50-80)      │    │
 │  └──────────┬───────────────────────┘    │
 │             │                             │
 │             ▼                             │
@@ -72,6 +78,10 @@ This is a proof-of-concept fraud detection system that demonstrates a production
         │  - rules      │
         │  - triggered_ │
         │    transactions│
+        │  - blocked_   │
+        │    customers  │
+        │  - blocked_   │
+        │    merchants  │
         └───────────────┘
                 │
                 │ REST API
@@ -82,7 +92,8 @@ This is a proof-of-concept fraud detection system that demonstrates a production
 │  - Dashboard (metrics & charts)           │
 │  - Rule Management (CRUD)                 │
 │  - Triggered Transactions (search/filter) │
-│  - Authentication (JWT)                   │
+│  - Blocklist Management (CRUD)            │
+│  - Authentication (Keycloak OAuth2)       │
 └───────────────────────────────────────────┘
 ```
 
@@ -97,14 +108,16 @@ This is a proof-of-concept fraud detection system that demonstrates a production
 - **Messaging:** Apache Kafka
 - **Persistence:** Spring Data JPA
 - **Migrations:** Flyway
-- **Security:** Spring Security + JWT
+- **Security:** Spring Security + Keycloak OAuth2/OIDC
+- **Async Processing:** Custom ThreadPoolExecutor (10 threads)
 - **Build Tool:** Maven
-- **Testing:** JUnit 5, Testcontainers, Mockito
+- **Testing:** JUnit 5, Testcontainers, Mockito (54 unit + 8 integration tests)
 
 ### Frontend (fraud-rule-engine-ui)
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS
+- **Styling:** Tailwind CSS + Capitec branding
+- **Authentication:** Keycloak OAuth2/OIDC integration
 - **Data Fetching:** React Query (TanStack Query)
 - **HTTP Client:** Axios
 - **Forms:** React Hook Form + Zod validation
@@ -113,9 +126,11 @@ This is a proof-of-concept fraud detection system that demonstrates a production
 
 ### Infrastructure
 - **Containerization:** Docker + Docker Compose
-- **Database:** PostgreSQL 15 (Docker)
+- **Database:** PostgreSQL 15 (Docker) - auto-creates Keycloak DB
 - **Message Queue:** Kafka + Zookeeper (Docker)
-- **Local Development:** All services in Docker Compose
+- **Authentication:** Keycloak 24.0 (Docker)
+- **Observability:** Grafana + Loki + Promtail (Docker)
+- **Local Development:** All services in Docker Compose with automated setup
 
 ---
 
@@ -152,6 +167,32 @@ Stores transactions that matched one or more rules.
 **Design Decision:** One record per rule match. If a transaction triggers 3 rules, 3 records are created.
 
 **Indexes:** Extensive indexing on `rule_id`, `customer_id`, `account_id`, `transaction_id`, `triggered_at`, `rule_type` for query performance.
+
+#### `blocked_customers`
+Stores customers on the blocklist for instant blocking (risk score 100).
+
+**Key Columns:**
+- `id` - Primary key
+- `customer_id` - Unique customer identifier
+- `reason` - Why this customer was blocked
+- `blocked_by` - Who added them to the blocklist
+- `blocked_at` - Timestamp when blocked
+- `is_active` - Boolean flag to enable/disable block
+
+**Index:** Unique index on `customer_id` for instant lookups.
+
+#### `blocked_merchants`
+Stores merchants on the blocklist for instant blocking (risk score 95).
+
+**Key Columns:**
+- `id` - Primary key
+- `merchant_name` - Merchant name (case-insensitive matching)
+- `reason` - Why this merchant was blocked
+- `blocked_by` - Who added them to the blocklist
+- `blocked_at` - Timestamp when blocked
+- `is_active` - Boolean flag to enable/disable block
+
+**Index:** Index on `merchant_name` for fast lookups.
 
 ---
 
@@ -258,15 +299,21 @@ public class AmountThresholdRuleEvaluator implements RuleEvaluationStrategy { ..
 
 ---
 
-### 5. Synchronous Kafka Processing
-**Decision:** Each Kafka message is processed synchronously (blocking).
+### 5. Asynchronous Rule Evaluation
+**Decision:** Rule evaluation happens asynchronously using a custom ThreadPoolExecutor.
+
+**Implementation:**
+- Custom thread pool with 10 threads (`fraud-async-1` through `fraud-async-10`)
+- Configured in `AsyncConfig.java` with `@EnableAsync`
+- Rule evaluation service methods annotated with `@Async`
 
 **Why:**
-- Simpler implementation
-- Guaranteed ordering
-- Acceptable performance for POC volumes
+- Improved throughput for high-volume transaction processing
+- Non-blocking Kafka consumer
+- Scalable architecture for production deployment
+- Leverages Java 21's virtual thread capabilities
 
-**Production Alternative:** Async processing with virtual threads (Java 21) or reactive streams.
+**Trade-off:** Added complexity in error handling and monitoring. Mitigated by comprehensive logging.
 
 ---
 

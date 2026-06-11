@@ -30,37 +30,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -69,93 +39,39 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "blue",
+                "value": 0
               }
             ]
           },
-          "unit": "logs"
+          "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ERROR"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "WARN"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "INFO"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "DEBUG"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 4,
         "x": 0,
         "y": 0
       },
-      "id": 1,
+      "id": 100,
       "options": {
-        "legend": {
-          "calcs": ["last", "max"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
+        "textMode": "auto"
       },
+      "pluginVersion": "10.2.3",
       "targets": [
         {
           "datasource": {
@@ -163,13 +79,273 @@
             "uid": "P8E80F9AEF21F6940"
           },
           "editorMode": "code",
-          "expr": "sum by(level) (rate({container_name=\"fraud-api\"} | json [5m]))",
+          "expr": "sum(count_over_time({container_name=\"fraud-api\",level=\"INFO\"} | __error__=\"\" [5m]))",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Log Rate by Level (fraud-api)",
-      "type": "timeseries"
+      "title": "INFO Logs (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "purple",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 101,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({container_name=\"fraud-api\",level=\"DEBUG\"} | __error__=\"\" [5m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "DEBUG Logs (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 102,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({container_name=\"fraud-api\",level=\"WARN\"} | __error__=\"\" [5m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "WARN Logs (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 103,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({container_name=\"fraud-api\",level=\"ERROR\"} | __error__=\"\" [5m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "ERROR Logs (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 104,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({container_name=\"fraud-api\",level=\"TRACE\"} | __error__=\"\" [5m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "TRACE Logs (5m)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -207,14 +383,16 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 0
+        "y": 4
       },
       "id": 2,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
           "values": false,
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": ""
         },
         "showThresholdLabels": false,
@@ -265,7 +443,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 0
+        "y": 4
       },
       "id": 3,
       "options": {
@@ -275,7 +453,9 @@
         "orientation": "auto",
         "reduceOptions": {
           "values": false,
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": ""
         },
         "textMode": "auto"
@@ -301,211 +481,11 @@
         "type": "loki",
         "uid": "P8E80F9AEF21F6940"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 4
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "values": ["value"]
-        },
-        "pieType": "donut",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
-          },
-          "editorMode": "code",
-          "expr": "sum by(level) (count_over_time({container_name=\"fraud-api\"} | json [15m]))",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "title": "Log Distribution by Level",
-      "type": "piechart"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 4
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "values": ["value"]
-        },
-        "pieType": "donut",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
-          },
-          "editorMode": "code",
-          "expr": "sum by(container_name) (count_over_time({container_name=~\"fraud-.*\"} [15m]))",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "title": "Log Distribution by Service",
-      "type": "piechart"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
-            "fillOpacity": 100,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "logs"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": ["sum"],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
-          },
-          "editorMode": "code",
-          "expr": "sum by(container_name) (count_over_time({container_name=~\"fraud-.*\"} [1m]))",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "Log Volume by Service (1m intervals)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "P8E80F9AEF21F6940"
-      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 20
       },
       "id": 7,
       "options": {
@@ -542,7 +522,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 28
       },
       "id": 8,
       "options": {
@@ -674,12 +654,16 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 38
       },
       "id": 9,
       "options": {
         "legend": {
-          "calcs": ["mean", "max", "last"],
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -703,14 +687,212 @@
       ],
       "title": "System-Wide Log Rate (All Services)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Errors/min",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate({container_name=\"fraud-api\",level=\"ERROR\"} | __error__=\"\" [1m])) * 60",
+          "legendFormat": "ERROR",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Rate (Errors/min)",
+      "type": "timeseries"
     }
   ],
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["fraud-detection", "logs", "monitoring"],
+  "tags": [
+    "fraud-detection",
+    "logs",
+    "monitoring"
+  ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "P8E80F9AEF21F6940"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Log Level",
+        "multi": true,
+        "name": "log_level",
+        "options": [],
+        "query": {
+          "label": "level",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "P8E80F9AEF21F6940"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Service",
+        "multi": true,
+        "name": "service",
+        "options": [],
+        "query": {
+          "label": "container_name",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Search Text",
+        "name": "search_text",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
   },
   "time": {
     "from": "now-15m",

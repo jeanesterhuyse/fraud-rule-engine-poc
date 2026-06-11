@@ -2,9 +2,10 @@
 
 Complete database schema documentation for the Fraud Rule Engine.
 
-**Schema Version:** v5  
+**Schema Version:** v4 (with blocklists)  
 **Migration Tool:** Flyway  
-**Database:** PostgreSQL 15+
+**Database:** PostgreSQL 15+  
+**Last Updated:** June 11, 2026
 
 ---
 
@@ -55,14 +56,19 @@ CREATE TABLE rules (
 - `idx_rules_rule_type` ON (rule_type)
 - `idx_rules_priority` ON (priority)
 
-**Rule Types:**
-- `AMOUNT_THRESHOLD`
-- `VELOCITY`
-- `GEOGRAPHIC_ANOMALY`
-- `MERCHANT_RISK`
-- `AMOUNT_RANGE`
-- `RAPID_FIRE`
-- `DORMANT_ACCOUNT`
+**Rule Types (12 total):**
+- `CUSTOMER_BLOCKLIST` - Instant block (Risk: 100)
+- `MERCHANT_BLOCKLIST` - Instant block (Risk: 95)
+- `AMOUNT_THRESHOLD` - Large transactions (Risk: 50-100)
+- `GEOGRAPHIC_ANOMALY` - High-risk countries (Risk: 75)
+- `MERCHANT_RISK` - High-risk merchants (Risk: 65)
+- `AMOUNT_RANGE` - Structuring detection (Risk: 70)
+- `TIME_OF_DAY_ANOMALY` - Unusual hours 2-5 AM (Risk: 60)
+- `ROUND_AMOUNT` - Card testing (Risk: 55-65)
+- `CNP_HIGH_RISK` - Card-not-present fraud (Risk: 60-75)
+- `CURRENCY_MISMATCH` - Foreign currency anomalies (Risk: 55)
+- `CROSS_BORDER_HIGH_RISK` - Cross-border high-risk (Risk: 90)
+- `LARGE_WITHDRAWAL` - Large ATM withdrawals (Risk: 50-80)
 
 ---
 
@@ -116,6 +122,59 @@ CREATE TABLE triggered_transactions (
 
 ---
 
+### `blocked_customers`
+
+Stores customers on the blocklist for instant blocking (risk score 100).
+
+```sql
+CREATE TABLE blocked_customers (
+    id                      BIGSERIAL PRIMARY KEY,
+    customer_id             VARCHAR(100) NOT NULL UNIQUE,
+    reason                  TEXT NOT NULL,
+    blocked_by              VARCHAR(100) NOT NULL,
+    blocked_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_active               BOOLEAN NOT NULL DEFAULT TRUE
+);
+```
+
+**Indexes:**
+- `idx_blocked_customers_customer_id` ON (customer_id) - Unique index for instant lookups
+- `idx_blocked_customers_active` ON (is_active)
+
+**Usage:**
+- Customer blocklist rule (`CUSTOMER_BLOCKLIST`) queries this table
+- Any transaction from a blocked customer receives risk score 100
+- Can be temporarily disabled by setting `is_active = false`
+
+---
+
+### `blocked_merchants`
+
+Stores merchants on the blocklist for instant blocking (risk score 95).
+
+```sql
+CREATE TABLE blocked_merchants (
+    id                      BIGSERIAL PRIMARY KEY,
+    merchant_name           VARCHAR(255) NOT NULL,
+    reason                  TEXT NOT NULL,
+    blocked_by              VARCHAR(100) NOT NULL,
+    blocked_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_active               BOOLEAN NOT NULL DEFAULT TRUE
+);
+```
+
+**Indexes:**
+- `idx_blocked_merchants_name` ON (merchant_name) - For fast lookups
+- `idx_blocked_merchants_active` ON (is_active)
+
+**Usage:**
+- Merchant blocklist rule (`MERCHANT_BLOCKLIST`) queries this table
+- Case-insensitive matching on `merchant_name`
+- Any transaction at a blocked merchant receives risk score 95
+- Can be temporarily disabled by setting `is_active = false`
+
+---
+
 ## Migration History
 
 ### V1: Create Rules Table
@@ -128,47 +187,47 @@ CREATE TABLE triggered_transactions (
 - Comprehensive indexes
 - Foreign key to rules
 
-### V3: Insert Seed Rules
-- Sample rules for testing
-- Various rule types demonstrated
-
-### V4: Make rule_id Nullable (June 9, 2026)
-**Purpose:** Preserve audit trail when rules are deleted
+### V3: Create Blocklist Tables (June 11, 2026)
+**Purpose:** Customer and merchant blocklists for instant blocking
 
 ```sql
-ALTER TABLE triggered_transactions
-    ALTER COLUMN rule_id DROP NOT NULL;
+CREATE TABLE blocked_customers (
+    id BIGSERIAL PRIMARY KEY,
+    customer_id VARCHAR(100) NOT NULL UNIQUE,
+    reason TEXT NOT NULL,
+    blocked_by VARCHAR(100) NOT NULL,
+    blocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE blocked_merchants (
+    id BIGSERIAL PRIMARY KEY,
+    merchant_name VARCHAR(255) NOT NULL,
+    reason TEXT NOT NULL,
+    blocked_by VARCHAR(100) NOT NULL,
+    blocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
 ```
 
-**Impact:** Transactions can exist without a rule reference
+**Impact:** 
+- New rule types: `CUSTOMER_BLOCKLIST` and `MERCHANT_BLOCKLIST`
+- Instant blocking with risk scores 100 and 95 respectively
+- Fast lookups with unique indexes
 
-### V5: Remove Cascade Delete (June 9, 2026)
-**Purpose:** Prevent transaction deletion when rules are deleted
+### V4: Insert Seed Rules (June 11, 2026)
+**Purpose:** Comprehensive seed data with all 12 rule types
 
-```sql
-ALTER TABLE triggered_transactions
-    DROP CONSTRAINT IF EXISTS fk_triggered_rule;
-
-ALTER TABLE triggered_transactions
-    ADD CONSTRAINT fk_triggered_rule
-    FOREIGN KEY (rule_id) REFERENCES rules(id)
-    ON DELETE SET NULL;
-```
-
-**Impact:** When a rule is deleted, `rule_id` becomes NULL (not cascade delete)
+- 16 demonstration rules covering all 12 rule types
+- Test data for blocklists (2 customers, 2 merchants)
+- Multiple instances of common rule types with different parameters
 
 ---
 
 ## Rule Deletion Behavior
 
-### Before (v3)
-- Deleting a rule **deleted all triggered transactions** (CASCADE)
-- Loss of audit trail
-- Compliance issues
-
-### After (v4 + v5)
 - Deleting a rule **preserves all transactions**
-- `rule_id` becomes NULL
+- `rule_id` becomes NULL (ON DELETE SET NULL)
 - Denormalized fields (`rule_name`, `rule_type`) maintain context
 - Complete audit trail preserved
 
@@ -180,6 +239,39 @@ DELETE FROM rules WHERE id = 123;
 -- Transactions still exist
 SELECT * FROM triggered_transactions WHERE rule_name = 'Large Transaction Alert';
 -- Returns all transactions, with rule_id = NULL
+```
+
+## Blocklist Management
+
+### Adding to Blocklist
+```sql
+-- Block a customer
+INSERT INTO blocked_customers (customer_id, reason, blocked_by)
+VALUES ('CUST-001', 'Suspected fraud', 'john.smith');
+
+-- Block a merchant
+INSERT INTO blocked_merchants (merchant_name, reason, blocked_by)
+VALUES ('Suspicious Shop', 'High fraud rate', 'john.smith');
+```
+
+### Removing from Blocklist
+```sql
+-- Soft delete (recommended)
+UPDATE blocked_customers SET is_active = FALSE WHERE customer_id = 'CUST-001';
+
+-- Hard delete (removes audit trail)
+DELETE FROM blocked_customers WHERE customer_id = 'CUST-001';
+```
+
+### Checking Blocklist Status
+```sql
+-- Check if customer is blocked
+SELECT * FROM blocked_customers 
+WHERE customer_id = 'CUST-001' AND is_active = TRUE;
+
+-- Check if merchant is blocked (case-insensitive)
+SELECT * FROM blocked_merchants 
+WHERE LOWER(merchant_name) = LOWER('Suspicious Shop') AND is_active = TRUE;
 ```
 
 ---

@@ -23,6 +23,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lombok.version>1.18.30</lombok.version>
         <testcontainers.version>1.19.7</testcontainers.version>
     </properties>
 

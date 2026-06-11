@@ -2,30 +2,39 @@
 
 A real-time fraud detection system with a rules engine, built with Spring Boot, React, Kafka, and PostgreSQL.
 
-**Status:** ✅ Production-Ready with Enterprise Observability  
-**Last Updated:** June 10, 2026 - 19:30
+**Status:** ✅ Production-Ready with Enterprise Observability + Async Processing + Blocklists  
+**Last Updated:** June 11, 2026 - 01:30
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Automated Setup)
 
 ### Prerequisites
 - Docker and Docker Compose (4GB+ RAM recommended)
 - Node.js 18+ (for UI development)
 - Java 21 (for API development)
 
-### Start the System
+### One-Command Startup
 
 ```bash
-# Start all services (API, UI, Database, Kafka, Observability Stack)
-docker-compose up -d
+# Automated setup - configures everything automatically
+./start-dev.sh
 
-# Check service health (all should show "healthy")
-docker-compose ps
+# Then start the UI
+cd fraud-rule-engine-ui
+npm install  # First time only
+npm run dev
 ```
 
-**Access Points:**
+**Login:** http://localhost:3000/login-keycloak
+- Username: `john.smith`
+- Password: `FraudDetect123!`
+
+> 📚 **New to the project?** See **[GETTING_STARTED.md](GETTING_STARTED.md)** for complete setup instructions, test users, and troubleshooting.
+
+### Access Points
 - 🎨 **UI Dashboard**: http://localhost:3000
+- 🔐 **Login Page**: http://localhost:3000/login-keycloak
 - 📊 **Grafana Observability**: http://localhost:3001 (anonymous access enabled)
 - 🔐 **Keycloak Auth**: http://localhost:8180 (admin/admin)
 - 🔧 **API**: http://localhost:8080
@@ -95,14 +104,19 @@ Located in `/docs/adr/`:
 **Key Features:**
 - ✅ Real-time transaction processing via Kafka
 - ✅ Rule-based fraud detection engine with risk scoring
+- ✅ **12 comprehensive rule types** (blocklists, cross-border, CNP fraud, time-of-day anomalies, etc.)
+- ✅ **Customer & merchant blocklists** with instant blocking (risk score 100)
+- ✅ **Async processing architecture** for scalability (custom thread pool)
 - ✅ **Keycloak OAuth2/OIDC authentication** (AD-ready)
 - ✅ **Enterprise observability with Grafana Loki** (structured JSON logging)
+- ✅ **Automated database initialization** (Keycloak DB auto-created)
 - ✅ **Custom exception handling** with consistent error responses
-- ✅ Professional Capitec-branded UI with logo
+- ✅ Professional Capitec-branded UI with logo and blocklists management
 - ✅ RESTful API with JWT token validation
 - ✅ Audit trail preservation (transactions kept when rules deleted)
 - ✅ Error handling with Dead Letter Queue (DLQ)
 - ✅ Role-based access control (fraud_analyst, fraud_viewer)
+- ✅ **Comprehensive test suite** (54 unit tests, 8 optional integration tests)
 - ✅ **Production-ready code quality** (clean, self-documenting)
 
 ---
@@ -128,17 +142,22 @@ Located in `/docs/adr/`:
 
 ---
 
-## 📊 Rule Types
+## 📊 Rule Types (12 Types)
 
-| Rule Type | Description | Key Parameters |
-|-----------|-------------|----------------|
-| **Amount Threshold** | Triggers on transactions exceeding a specific amount | threshold_amount |
-| **Velocity** | Triggers on multiple transactions within a time window | threshold_count, time_window_minutes |
-| **Geographic Anomaly** | Triggers on transactions from specific countries | country_code |
-| **Merchant Risk** | Triggers on high-risk merchant categories | merchant_category, threshold_amount |
-| **Amount Range** | Triggers on transactions within a specific range | min_amount, max_amount |
-| **Rapid Fire** | Triggers on rapid succession of transactions | threshold_count, time_window_minutes |
-| **Dormant Account** | Triggers on activity from dormant accounts | time_window_minutes |
+| Rule Type | Description | Key Parameters | Risk Score |
+|-----------|-------------|----------------|------------|
+| **Customer Blocklist** | Instant block for blocklisted customers | None (checks DB) | 100 |
+| **Merchant Blocklist** | Instant block for blocklisted merchants | None (checks DB) | 95 |
+| **Amount Threshold** | Triggers on transactions exceeding a specific amount | threshold_amount | 50-100 |
+| **Geographic Anomaly** | Triggers on transactions from high-risk countries | country_code | 75 |
+| **Merchant Risk** | Triggers on high-risk merchant categories | merchant_category | 65 |
+| **Amount Range** | Triggers on transactions within a specific range (structuring) | min_amount, max_amount | 70 |
+| **Time of Day Anomaly** | Triggers on transactions during unusual hours (2-5 AM) | start_hour, end_hour | 60 |
+| **Round Amount** | Triggers on large round amounts (card testing) | minimum_amount, round_to_nearest | 55-65 |
+| **CNP High Risk** | Card-not-present fraud at high-risk merchants | merchant_category | 60-75 |
+| **Currency Mismatch** | Foreign currency in foreign country | customer_home_country, customer_home_currency | 55 |
+| **Cross-Border High Risk** | Cross-border to high-risk countries | customer_home_country, country_code | 90 |
+| **Large Withdrawal** | Large ATM/cash withdrawals | threshold_amount | 50-80 |
 
 ---
 

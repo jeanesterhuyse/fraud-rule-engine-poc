@@ -8,10 +8,11 @@ Backend service for the Fraud Rule Engine POC.
 - **Framework:** Spring Boot 3.2.5
 - **Database:** PostgreSQL 15
 - **Messaging:** Apache Kafka
-- **Security:** JWT (Spring Security)
+- **Security:** Keycloak OAuth2/OIDC (Spring Security)
+- **Async Processing:** Custom ThreadPoolExecutor (@EnableAsync)
 - **Migrations:** Flyway
 - **Build Tool:** Maven 3.9+
-- **Testing:** JUnit 5, Testcontainers, AssertJ
+- **Testing:** JUnit 5, Testcontainers, AssertJ (54 unit + 8 integration tests)
 
 ## Prerequisites
 
@@ -129,13 +130,19 @@ export JWT_SECRET=YourSecretKeyHere
 
 ### Authentication
 
-```bash
-# Login
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"test","password":"test"}'
+**Keycloak OAuth2/OIDC:**
+- All API endpoints require Bearer token from Keycloak
+- Test users: `john.smith` / `FraudDetect123!` (fraud_analyst)
+- Roles: `fraud_analyst` (full access), `fraud_viewer` (read-only)
 
-# Response: {"token":"eyJhbG...","username":"test","roles":["ROLE_raas_consumer"],"expiresAt":"..."}
+```bash
+# Get token from Keycloak (via frontend login)
+# Or use Keycloak direct grant:
+curl -X POST http://localhost:8180/realms/fraud-detection/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=fraud-ui&username=john.smith&password=FraudDetect123!&grant_type=password"
+
+# Response: {"access_token":"eyJhbG...","token_type":"Bearer","expires_in":300}
 ```
 
 ### Rules API
@@ -219,6 +226,42 @@ curl -H "Authorization: Bearer <token>" \
   "http://localhost:8080/api/v1/dashboard/trends?hours=24"
 ```
 
+### Blocklists API
+
+```bash
+# Get blocked customers
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:8080/api/v1/blocklists/customers
+
+# Block a customer
+curl -X POST http://localhost:8080/api/v1/blocklists/customers \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "CUST-001",
+    "reason": "Suspected fraud",
+    "blockedBy": "john.smith"
+  }'
+
+# Unblock a customer
+curl -X DELETE http://localhost:8080/api/v1/blocklists/customers/CUST-001 \
+  -H "Authorization: Bearer <token>"
+
+# Get blocked merchants
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:8080/api/v1/blocklists/merchants
+
+# Block a merchant
+curl -X POST http://localhost:8080/api/v1/blocklists/merchants \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantName": "Suspicious Shop",
+    "reason": "High fraud rate",
+    "blockedBy": "john.smith"
+  }'
+```
+
 ### Health Checks
 
 ```bash
@@ -261,9 +304,10 @@ src/main/java/com/fraud/ruleengine/
 
 Flyway migrations are in `src/main/resources/db/migration/`:
 
-- `V1__create_rules_table.sql` - Rules table
+- `V1__create_rules_table.sql` - Rules table with all 12 rule types
 - `V2__create_triggered_transactions_table.sql` - Triggered transactions table
-- `V3__insert_seed_rules.sql` - Seed data (8 demonstration rules)
+- `V3__create_blocklist_tables.sql` - Blocked customers and merchants tables
+- `V4__insert_seed_rules.sql` - Seed data (16 rules, 12 types + blocklist test data)
 
 ### Running Migrations Manually
 
@@ -279,15 +323,20 @@ mvn flyway:info
 
 ## Rule Types
 
-The system supports 7 rule types:
+The system supports **12 rule types** with varying risk scores:
 
-1. **AMOUNT_THRESHOLD** - Single transaction exceeds amount
-2. **VELOCITY** - Multiple transactions in time window
-3. **GEOGRAPHIC_ANOMALY** - Transaction from high-risk country
-4. **MERCHANT_RISK** - Transaction at high-risk merchant
-5. **AMOUNT_RANGE** - Transaction within suspicious range
-6. **RAPID_FIRE** - Very short time between transactions
-7. **DORMANT_ACCOUNT** - First transaction after long inactivity
+1. **CUSTOMER_BLOCKLIST** - Instant block for blocklisted customers (Risk: 100)
+2. **MERCHANT_BLOCKLIST** - Instant block for blocklisted merchants (Risk: 95)
+3. **AMOUNT_THRESHOLD** - Single transaction exceeds amount (Risk: 50-100)
+4. **GEOGRAPHIC_ANOMALY** - Transaction from high-risk country (Risk: 75)
+5. **MERCHANT_RISK** - Transaction at high-risk merchant (Risk: 65)
+6. **AMOUNT_RANGE** - Transaction within suspicious range/structuring (Risk: 70)
+7. **TIME_OF_DAY_ANOMALY** - Transactions during unusual hours 2-5 AM (Risk: 60)
+8. **ROUND_AMOUNT** - Large round amounts indicating card testing (Risk: 55-65)
+9. **CNP_HIGH_RISK** - Card-not-present at high-risk merchants (Risk: 60-75)
+10. **CURRENCY_MISMATCH** - Foreign currency in foreign country (Risk: 55)
+11. **CROSS_BORDER_HIGH_RISK** - Cross-border to high-risk countries (Risk: 90)
+12. **LARGE_WITHDRAWAL** - Large ATM/cash withdrawals (Risk: 50-80)
 
 ## Adding a New Rule Type
 
@@ -386,11 +435,13 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 
 ### Optimizations in Place
 
-- **Database indexing** on all query fields
+- **Async rule evaluation** with custom ThreadPoolExecutor (10 threads)
+- **Database indexing** on all query fields including blocklists
 - **JPA lazy loading** for relationships
 - **Connection pooling** (HikariCP)
 - **Pagination** on all list endpoints
 - **@Transactional(readOnly = true)** for read operations
+- **Fast blocklist lookups** with indexed queries
 
 ### Production Recommendations
 
@@ -402,21 +453,24 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 
 ## Security
 
-### POC Security (Current)
+### Security (Current)
 
-- Hardcoded test user (username: `test`, password: `test`)
-- JWT secret in application.yml
-- Single role: `raas_consumer`
-- No token revocation
+- **Keycloak OAuth2/OIDC** integration ✅
+- **Role-based access control** (fraud_analyst, fraud_viewer) ✅
+- **JWT Bearer token validation** ✅
+- **Active Directory ready** - Keycloak supports LDAP/AD integration
+- Test users with realistic credentials
+- Auto-configured realm with users and roles
 
 ### Production Security Recommendations
 
-- OAuth2/OIDC integration (Keycloak, Auth0, Azure AD)
-- Refresh tokens
-- Token blacklist (Redis)
-- Granular role-based permissions
-- API rate limiting
-- Audit logging
+- Configure Keycloak for production (external database, clustering)
+- Integrate with corporate Active Directory/LDAP
+- Enable refresh tokens with rotation
+- Token blacklist (Redis) for revocation
+- API rate limiting per user/role
+- Enhanced audit logging with user tracking
+- HTTPS/TLS for all communications
 
 ## Monitoring
 

@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
@@ -15,6 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Key Features:
  * - Kafka-driven transaction ingestion
  * - Database-driven rule engine (Strategy Pattern)
+ * - Asynchronous processing for improved scalability
  * - REST API for rule management and fraud investigation
  * - OAuth2/OIDC authentication via Keycloak
  * - Dead Letter Queue for failed messages
@@ -22,6 +24,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableKafka
+@EnableAsync
 @EnableScheduling
 public class FraudRuleEngineApplication {
 

@@ -74,13 +74,18 @@ export default function RulesPage() {
 
   const getRuleTypeColor = (type: string) => {
     const colors: Record<string, string> = {
+      CUSTOMER_BLOCKLIST: 'badge-error',
+      MERCHANT_BLOCKLIST: 'badge-error',
       AMOUNT_THRESHOLD: 'badge-blue',
-      VELOCITY: 'badge-purple',
-      GEOGRAPHIC_ANOMALY: 'badge-error',
+      GEOGRAPHIC_ANOMALY: 'badge-warning',
       MERCHANT_RISK: 'badge-warning',
       AMOUNT_RANGE: 'badge-info',
-      RAPID_FIRE: 'badge-secondary',
-      DORMANT_ACCOUNT: 'badge-neutral',
+      TIME_OF_DAY_ANOMALY: 'badge-purple',
+      ROUND_AMOUNT: 'badge-secondary',
+      CNP_HIGH_RISK: 'badge-warning',
+      CURRENCY_MISMATCH: 'badge-info',
+      CROSS_BORDER_HIGH_RISK: 'badge-error',
+      LARGE_WITHDRAWAL: 'badge-blue',
     };
     return colors[type] || 'badge-neutral';
   };
