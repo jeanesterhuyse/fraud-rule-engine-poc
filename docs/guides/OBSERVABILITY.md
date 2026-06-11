@@ -1,6 +1,6 @@
 # Observability Stack - Grafana Loki
 
-**Last Updated:** June 10, 2026 - 20:00  
+**Last Updated:** June 11, 2026 - 10:20  
 **Status:** ✅ Production Ready
 
 Enterprise-grade observability for the Fraud Rule Engine POC using Grafana Loki with interactive search and filtering.
@@ -25,20 +25,24 @@ Enterprise-grade observability for the Fraud Rule Engine POC using Grafana Loki 
 
 The dashboard includes real-time search and filtering at the top:
 
-### **Search Logs** (Text Box)
-- Type any text to search across all logs
-- Examples: `Transaction`, `error`, `TXN-12345`, `Rule triggered`
-- All panels update in real-time as you type
+### **Search Text** (Text Box)
+- Type any text to search logs (case-insensitive regex matching)
+- Examples: `merchant`, `transaction`, `error`, `TXN-12345`
+- Default: `.*` (matches all logs)
+- Only affects: **Live Log Stream** and **Recent Errors & Warnings** panels
+- Top stat panels (INFO, DEBUG, WARN, ERROR, TRACE counts) remain unfiltered
 
 ### **Log Level** (Multi-Select Dropdown)
 - Filter by: INFO, DEBUG, WARN, ERROR, TRACE, or All
 - Multi-select enabled (Ctrl/Cmd + Click)
-- Default: All (shows INFO, DEBUG, WARN, ERROR, TRACE only - excludes unlabeled logs)
+- Default: All (uses `.+` to match any log level)
+- Only affects: **Live Log Stream** panel
 
 ### **Service** (Dropdown)
 - Select which service to monitor
-- Options: fraud-api, fraud-kafka, fraud-postgres, fraud-keycloak, fraud-grafana, fraud-loki
-- Default: fraud-api
+- Options: fraud-api, fraud-kafka, fraud-postgres, fraud-keycloak, etc.
+- Default: All (uses `.+` to match any service)
+- Affects: Both log stream panels
 
 ---
 
@@ -65,10 +69,15 @@ The "Fraud Detection - Log Monitoring" dashboard includes 8 panels:
    - Legend at bottom showing service names
 
 ### Row 3: Live Log Streams
-8. **Search Results** (Log Panel)
+7. **Recent Errors & Warnings** (Log Panel)
+   - Shows only ERROR and WARN level logs
+   - Filtered by Service and Search Text variables
+   - Plain text log format
+
+8. **Live Log Stream - Fraud API** (Log Panel)
    - Large panel showing all logs matching current filters
-   - Responds to Search Logs, Log Level, and Service filters
-   - Prettified JSON display with timestamps
+   - Responds to Search Text, Log Level, and Service filters
+   - Plain text log format with timestamps
    - Sortable, scrollable, expandable
 
 ### Dashboard Features
@@ -129,14 +138,11 @@ LogQL is Loki's query language (similar to PromQL for Prometheus).
 
 #### JSON Parsing
 ```logql
-# Parse JSON and filter by field
+# Note: fraud-api logs are plain text, not JSON format
+# JSON parsing is not used in this project's queries
+
+# For JSON logs (if you change log format), use:
 {container_name="fraud-api"} | json | transaction_id="TXN-12345"
-
-# Filter by customer
-{container_name="fraud-api"} | json | customer_id="CUST-789"
-
-# Filter by rule type
-{container_name="fraud-api"} | json | rule_type="VELOCITY"
 ```
 
 #### Aggregations
