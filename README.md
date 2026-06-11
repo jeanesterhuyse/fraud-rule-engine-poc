@@ -33,13 +33,15 @@ npm run dev
 > 📚 **New to the project?** See **[GETTING_STARTED.md](GETTING_STARTED.md)** for complete setup instructions, test users, and troubleshooting.
 
 ### Access Points
-- 🎨 **UI Dashboard**: http://localhost:3000
+- 🎨 **UI Dashboard**: http://localhost:3000 (explicit port, no conflicts)
 - 🔐 **Login Page**: http://localhost:3000/login-keycloak
 - 📊 **Grafana Observability**: http://localhost:3001 (anonymous access enabled)
 - 🔐 **Keycloak Auth**: http://localhost:8180 (admin/admin)
 - 🔧 **API**: http://localhost:8080
 - 📈 **Kafka UI**: http://localhost:8090
 - 🗄️ **PostgreSQL**: localhost:5432
+
+> **Port Note:** The frontend is configured to always use port 3000. Grafana uses 3001 to prevent conflicts.
 
 ### Development Mode
 
@@ -198,6 +200,10 @@ See [API Configuration](fraud-rule-engine-api/CONFIGURATION.md) for detailed set
 
 ## 🐛 Troubleshooting
 
+**Port conflicts:**
+- Check all ports: `./check-ports.sh`
+- Free a specific port: `lsof -ti:3000 | xargs kill -9`
+
 **API won't start:**
 - Check PostgreSQL: `docker-compose ps postgres`
 - View logs: `docker logs fraud-api`
@@ -205,6 +211,7 @@ See [API Configuration](fraud-rule-engine-api/CONFIGURATION.md) for detailed set
 **UI shows connection errors:**
 - Verify API: `curl http://localhost:8080/actuator/health`
 - Check `.env.local` file
+- Ensure port 3000 is free
 
 **Kafka errors:**
 - Check Kafka: `docker-compose ps kafka`

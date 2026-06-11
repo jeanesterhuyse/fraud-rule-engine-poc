@@ -106,6 +106,16 @@ echo "   - 2 blocked customers in blocklist"
 echo "   - 2 blocked merchants in blocklist"
 echo ""
 echo "🚀 Next Steps:"
+
+# Check if port 3000 is available
+if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo "   ⚠️  WARNING: Port 3000 is already in use!"
+    echo "   Run: lsof -ti:3000 | xargs kill -9  (to free the port)"
+    echo ""
+else
+    echo "   ✅ Port 3000 is available"
+fi
+
 echo "   1. Start the UI: cd fraud-rule-engine-ui && npm run dev"
 echo "   2. Open: http://localhost:3000/login-keycloak"
 echo "   3. Login with john.smith / FraudDetect123!"

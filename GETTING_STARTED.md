@@ -100,6 +100,8 @@ After startup, the system includes:
 | **Kafka UI** | http://localhost:8090 | - |
 | **PostgreSQL** | localhost:5432 | fraud_user / fraud_pass |
 
+> **Port Management:** Frontend uses port 3000 (explicit), Grafana uses 3001. Run `./check-ports.sh` to verify port availability.
+
 ---
 
 ## 🛠️ Development Workflow
