@@ -4,6 +4,22 @@
 
 ---
 
+## Quick Access Links (After Setup)
+
+Once everything is running, access these URLs in your browser:
+
+| Service | URL | Credentials | Purpose |
+|---------|-----|-------------|---------|
+| **Frontend UI** | http://localhost:3000/login-keycloak | john.smith / FraudDetect123! | Main application |
+| **Grafana Dashboard** | http://localhost:3001 | No login required | View logs & monitoring |
+| **API Health** | http://localhost:8080/actuator/health | No credentials | Check API status |
+| **Keycloak Admin** | http://localhost:8180 | admin / admin | Manage users & roles |
+| **Kafka UI** | http://localhost:8090 | No credentials | Monitor Kafka topics |
+
+**Grafana Dashboard:** Navigate to Dashboards → "Fraud Detection - Log Monitoring"
+
+---
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -168,10 +184,62 @@ Open your browser and navigate to:
 - Filter by date range and rule type
 - See risk scores and match reasons
 
-### Observability (Grafana)
-- Access: http://localhost:3001
-- Pre-loaded dashboard for log monitoring
-- View real-time logs from all services
+### Observability with Grafana
+**Access:** http://localhost:3001
+
+Grafana starts automatically with `./start-dev.sh` - no additional setup needed!
+
+**Features:**
+- ✅ **Anonymous access enabled** - No login required
+- ✅ **Pre-configured Loki datasource** - Logs from all Docker containers
+- ✅ **Pre-loaded dashboard:** "Fraud Detection - Log Monitoring"
+- ✅ **Real-time log streaming** from API, Kafka, PostgreSQL, Keycloak
+
+**How to Use:**
+
+1. **Open Grafana:** http://localhost:3001 (opens directly, no login)
+
+2. **View Pre-loaded Dashboard:**
+   - Click "Dashboards" (left menu, four squares icon)
+   - Click "Fraud Detection - Log Monitoring"
+   - See real-time logs with filters and charts
+
+3. **Explore Logs Manually:**
+   - Click "Explore" (compass icon in left menu)
+   - Datasource is already set to "Loki"
+   - Try these queries:
+     ```
+     # All API logs
+     {container_name="fraud-api"}
+     
+     # Only errors
+     {container_name="fraud-api"} |= "ERROR"
+     
+     # Specific transaction
+     {container_name="fraud-api"} |= "TXN-12345"
+     
+     # All errors across all services
+     {container_name=~"fraud-.*"} |= "ERROR"
+     ```
+
+4. **Filter Logs by Level:**
+   - In the dashboard, use the "Log Level" dropdown
+   - Options: ALL, ERROR, WARN, INFO, DEBUG, TRACE
+
+**Dashboard Panels:**
+- 📊 Log Rate Over Time (requests per second)
+- 🔴 Error Count
+- ⚠️ Warning Count  
+- 📝 Recent Log Entries (live stream)
+- 🎯 Logs by Service
+- 📈 Transaction Processing Rate
+
+**Useful for:**
+- Debugging API errors
+- Monitoring transaction processing
+- Tracking rule evaluations
+- Viewing Kafka message flow
+- Database query performance
 
 ---
 
@@ -408,11 +476,18 @@ npm run build                     # Check for TypeScript errors
    - Set threshold to 50000
    - Save and verify it appears
 
-3. ✅ **View Logs in Grafana**
-   - Open http://localhost:3001
-   - Click "Explore"
-   - Select "Loki" datasource
-   - Query: `{container_name="fraud-api"}`
+3. ✅ **View Pre-loaded Grafana Dashboard**
+   - Open http://localhost:3001 (no login required)
+   - Click "Dashboards" icon (four squares) in left menu
+   - Select "Fraud Detection - Log Monitoring"
+   - See real-time logs, error rates, and transaction processing
+   - Use "Log Level" dropdown to filter (ALL, ERROR, WARN, INFO, DEBUG)
+   
+   **Alternative - Explore Raw Logs:**
+   - Click "Explore" (compass icon)
+   - Loki datasource is pre-selected
+   - Try query: `{container_name="fraud-api"}`
+   - See live log stream from API
 
 4. ✅ **Explore API Documentation**
    - See `fraud-rule-engine-api/README.md`
