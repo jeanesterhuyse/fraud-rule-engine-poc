@@ -1,8 +1,23 @@
-# Maven
-.mvn/
-# target/ - DO NOT IGNORE - we need the JAR from target/
+# Maven build artifacts (except the final JAR we need)
+target/classes/
+target/generated-sources/
+target/generated-test-sources/
+target/maven-archiver/
+target/maven-status/
+target/test-classes/
+target/surefire-reports/
+*.original
 
-# IDE
+# Keep target/*.jar - we need this for Docker build
+
+# Source files (not needed in Docker image)
+src/
+pom.xml
+mvnw
+mvnw.cmd
+.mvn/
+
+# IDE files
 .idea/
 *.iml
 .vscode/
@@ -10,21 +25,17 @@
 .project
 .classpath
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
 # Git
 .git/
 .gitignore
 
 # Documentation
+README.md
 *.md
-docs/
 
-# Test resources
-src/test/
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
