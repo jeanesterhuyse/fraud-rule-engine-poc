@@ -60,8 +60,13 @@ Before you begin, ensure you have:
    - Download: https://adoptium.net/ (Eclipse Temurin JDK 21)
    - Verify: `java -version` (must show version 21.x.x)
    - **Important:** Java 17 or lower will NOT work - you must use Java 21
+   - **Note:** On macOS, the startup script will automatically switch to Java 21 if installed
 
-4. **Git** (to clone the repository)
+4. **Maven** (for building backend)
+   - Download: https://maven.apache.org/download.cgi
+   - Verify: `mvn --version`
+
+5. **Git** (to clone the repository)
    - Verify: `git --version`
 
 **System Requirements:**
@@ -78,51 +83,19 @@ git clone <repository-url>
 cd fraud-rule-engine-poc
 ```
 
-### Step 2: Build the Backend (First Time Only)
+### Step 2: Start All Backend Services
 
-**Important:** You must build the JAR file before running `start-dev.sh` for the first time.
+**Important:** The startup script will automatically build the backend if needed and switch to Java 21!
 
-**Verify Java 21 first:**
-```bash
-java -version
-# Must show: openjdk version "21.0.x" or similar
-# If not, install Java 21 from https://adoptium.net/
-```
-
-**Build the JAR:**
-```bash
-cd fraud-rule-engine-api
-mvn clean package -DskipTests
-cd ..
-```
-
-**Expected Output:** `BUILD SUCCESS`
-
-> **🛡️ Maven Enforcer Protection:** The build includes a Maven Enforcer plugin that will **immediately fail** if you're not using Java 21, with a clear error message telling you how to fix it.
-
-**Common Build Errors:**
-- ❌ `Java 21 REQUIRED but you are using: 17.0.x` → Maven enforcer blocked the build, install Java 21
-- ❌ `Java 21 REQUIRED but you are using: 25.0.x` → Maven enforcer blocked the build, set JAVA_HOME to Java 21
-- ❌ `ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag` → Old error (now caught by enforcer)
-
-**Verify JAR exists:**
-```bash
-ls -l fraud-rule-engine-api/target/*.jar
-```
-
-You should see: `fraud-rule-engine-api-1.0.0-SNAPSHOT.jar`
-
-> **Note:** If you skip this step, `start-dev.sh` will exit with a helpful error message telling you to build the JAR first.
-
-### Step 3: Start All Backend Services
-
-Now run the automated startup script:
+Run the automated startup script:
 
 ```bash
 ./start-dev.sh
 ```
 
 **What this does:**
+- ✅ Checks and automatically switches to Java 21 (on macOS)
+- ✅ **Automatically builds the backend JAR** if it doesn't exist
 - ✅ Starts all Docker services (API, Database, Kafka, Keycloak, Grafana)
 - ✅ **Automated Keycloak database creation** (no manual steps)
 - ✅ Configures authentication realm and test users
@@ -130,6 +103,24 @@ Now run the automated startup script:
 - ✅ Loads 16 fraud detection rules (12 rule types)
 - ✅ Loads blocklist test data
 - ✅ **Async processing** enabled with custom thread pool (fraud-async-1, fraud-async-2)
+
+> **🎯 Automatic Java 21 Detection:** If you have Java 21 installed but not active, the script will automatically switch to it using `/usr/libexec/java_home -v 21` on macOS.
+
+> **🛡️ Maven Enforcer Protection:** The build includes a Maven Enforcer plugin that will **immediately fail** if you're not using Java 21, with a clear error message.
+
+**Common Build Errors:**
+- ❌ `Java 21 REQUIRED but you are using: 17.0.x` → Maven enforcer blocked the build, install Java 21
+- ❌ `Java 21 REQUIRED but you are using: 25.0.x` → Maven enforcer blocked the build, set JAVA_HOME to Java 21
+- ❌ Java 21 not found on system → Install Java 21 from https://adoptium.net/
+
+**Manual Build (Optional):**
+
+If you prefer to build manually first:
+```bash
+cd fraud-rule-engine-api
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn clean package -DskipTests
+cd ..
+```
 
 **Expected Output:**
 ```
@@ -157,7 +148,7 @@ docker-compose ps
 
 All services should show "healthy" status.
 
-### Step 4: Start the Frontend
+### Step 3: Start the Frontend
 
 In a **new terminal window**:
 
@@ -174,7 +165,7 @@ npm run dev
 
 **Note:** Frontend runs on port 3000 (not in Docker) and will hot-reload on changes.
 
-### Step 5: Access the Application
+### Step 4: Access the Application
 
 Open your browser: **http://localhost:3000/login-keycloak**
 
@@ -272,7 +263,7 @@ curl http://localhost:8080/actuator/health  # API health
 2. **Rebuild and restart:**
 ```bash
 cd fraud-rule-engine-api
-mvn clean package -DskipTests
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn clean package -DskipTests
 cd ..
 docker-compose restart fraud-api
 ```
@@ -296,8 +287,8 @@ curl http://localhost:8080/actuator/health
 **Backend:**
 ```bash
 cd fraud-rule-engine-api
-mvn test                          # Unit tests
-mvn verify                        # Unit + Integration tests
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn test      # Unit tests
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn verify    # Unit + Integration tests
 ```
 
 **Frontend:**

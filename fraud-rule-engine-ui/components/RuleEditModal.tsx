@@ -67,10 +67,26 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
     setSaving(true);
 
     try {
+      // For CREATE: filter out undefined/null/empty
+      // For UPDATE: send all fields including null to clear old values
+      let dataToSend: Partial<Rule>;
+
+      if (isCreateMode) {
+        // Creating: only send defined values
+        dataToSend = Object.fromEntries(
+          Object.entries(formData).filter(([_, value]) => value !== undefined && value !== null && value !== '')
+        ) as Partial<Rule>;
+      } else {
+        // Updating: send all fields, converting undefined to null to clear old values
+        dataToSend = Object.fromEntries(
+          Object.entries(formData).map(([key, value]) => [key, value === undefined ? null : value])
+        ) as Partial<Rule>;
+      }
+
       if (isCreateMode && onCreate) {
-        await onCreate(formData);
+        await onCreate(dataToSend);
       } else if (rule) {
-        await onSave(rule.id, formData);
+        await onSave(rule.id, dataToSend);
       }
       onClose();
     } catch (err: any) {
@@ -82,6 +98,28 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
 
   const handleChange = (field: keyof Rule, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleRuleTypeChange = (newRuleType: RuleType) => {
+    // Reset all rule-type-specific fields when changing rule type
+    setFormData(prev => ({
+      ...prev,
+      ruleType: newRuleType,
+      // Clear all type-specific fields
+      thresholdAmount: undefined,
+      thresholdCount: undefined,
+      timeWindowMinutes: undefined,
+      merchantCategory: undefined,
+      countryCode: undefined,
+      minAmount: undefined,
+      maxAmount: undefined,
+      startHour: undefined,
+      endHour: undefined,
+      minimumAmount: undefined,
+      roundToNearest: undefined,
+      customerHomeCountry: undefined,
+      customerHomeCurrency: undefined,
+    }));
   };
 
   // Determine which fields to show based on rule type
@@ -176,7 +214,7 @@ export default function RuleEditModal({ rule, onClose, onSave, onCreate }: RuleE
                   <select
                     id="ruleType"
                     value={formData.ruleType || ''}
-                    onChange={(e) => handleChange('ruleType', e.target.value)}
+                    onChange={(e) => handleRuleTypeChange(e.target.value as RuleType)}
                     className="select w-full"
                     required
                   >

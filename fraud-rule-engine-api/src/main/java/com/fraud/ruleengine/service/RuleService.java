@@ -52,6 +52,23 @@ public class RuleService {
         existingRule.setRuleType(updatedRule.getRuleType());
         existingRule.setEnabled(updatedRule.getEnabled());
         existingRule.setPriority(updatedRule.getPriority());
+
+        // Clear all rule-specific fields first to prevent validation errors when changing rule types
+        existingRule.setThresholdAmount(null);
+        existingRule.setThresholdCount(null);
+        existingRule.setTimeWindowMinutes(null);
+        existingRule.setMerchantCategory(null);
+        existingRule.setCountryCode(null);
+        existingRule.setMinAmount(null);
+        existingRule.setMaxAmount(null);
+        existingRule.setStartHour(null);
+        existingRule.setEndHour(null);
+        existingRule.setMinimumAmount(null);
+        existingRule.setRoundToNearest(null);
+        existingRule.setCustomerHomeCountry(null);
+        existingRule.setCustomerHomeCurrency(null);
+
+        // Now set the new values from updatedRule
         existingRule.setThresholdAmount(updatedRule.getThresholdAmount());
         existingRule.setThresholdCount(updatedRule.getThresholdCount());
         existingRule.setTimeWindowMinutes(updatedRule.getTimeWindowMinutes());
@@ -59,6 +76,12 @@ public class RuleService {
         existingRule.setCountryCode(updatedRule.getCountryCode());
         existingRule.setMinAmount(updatedRule.getMinAmount());
         existingRule.setMaxAmount(updatedRule.getMaxAmount());
+        existingRule.setStartHour(updatedRule.getStartHour());
+        existingRule.setEndHour(updatedRule.getEndHour());
+        existingRule.setMinimumAmount(updatedRule.getMinimumAmount());
+        existingRule.setRoundToNearest(updatedRule.getRoundToNearest());
+        existingRule.setCustomerHomeCountry(updatedRule.getCustomerHomeCountry());
+        existingRule.setCustomerHomeCurrency(updatedRule.getCustomerHomeCurrency());
 
         log.info("Updated rule: {}", existingRule.getName());
         return ruleRepository.save(existingRule);

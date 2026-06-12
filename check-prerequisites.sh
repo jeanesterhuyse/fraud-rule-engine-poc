@@ -53,9 +53,25 @@ if command -v java &> /dev/null; then
         echo "   ✅ Java 21 detected - CORRECT VERSION"
     else
         echo "   ⚠️  Java 21 recommended but you have: $JAVA_VERSION"
-        echo "      Maven enforcer will verify the correct version during build"
-        echo "      If build fails, set JAVA_HOME to Java 21:"
-        echo "      export JAVA_HOME=\$(/usr/libexec/java_home -v 21)  # macOS"
+
+        # Try to switch to Java 21 automatically on macOS
+        if [[ "$OSTYPE" == "darwin"* ]] && command -v /usr/libexec/java_home &> /dev/null; then
+            if /usr/libexec/java_home -v 21 &> /dev/null; then
+                export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+                export PATH="$JAVA_HOME/bin:$PATH"
+                JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+                echo "   ✅ Automatically switched to Java 21: $JAVA_VERSION"
+                echo "      JAVA_HOME set to: $JAVA_HOME"
+            else
+                echo "      Java 21 not found on system"
+                echo "      Download Java 21 from: https://adoptium.net/"
+                echo "      Or manually set: export JAVA_HOME=\$(/usr/libexec/java_home -v 21)"
+            fi
+        else
+            echo "      Maven enforcer will verify the correct version during build"
+            echo "      If build fails, set JAVA_HOME to Java 21:"
+            echo "      export JAVA_HOME=\$(/usr/libexec/java_home -v 21)  # macOS"
+        fi
     fi
 
     # Check Maven's Java
@@ -65,8 +81,11 @@ if command -v java &> /dev/null; then
         if echo "$MVN_JAVA" | grep -q "Java version: 21"; then
             echo "   ✅ Maven is configured to use Java 21"
         else
-            echo "   ⚠️  Maven is NOT using Java 21 - set JAVA_HOME"
-            echo "      export JAVA_HOME=\$(/usr/libexec/java_home -v 21)  # macOS"
+            echo "   ⚠️  Maven is NOT using Java 21"
+            if [[ -n "$JAVA_HOME" ]] && [[ "$JAVA_HOME" == *"21"* ]]; then
+                echo "      JAVA_HOME is set to Java 21, but Maven might be using a different version"
+                echo "      Try running: mvn clean package -DskipTests"
+            fi
         fi
     fi
 else
