@@ -9,6 +9,7 @@ echo "=========================================="
 echo ""
 
 ERRORS=0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check Docker
 echo "🐳 Checking Docker..."
@@ -42,7 +43,7 @@ else
 fi
 echo ""
 
-# Check Java
+# Check Java and auto-switch to Java 21
 echo "☕ Checking Java..."
 if command -v java &> /dev/null; then
     JAVA_VERSION=$(java -version 2>&1 | head -n 1)
@@ -53,25 +54,60 @@ if command -v java &> /dev/null; then
         echo "   ✅ Java 21 detected - CORRECT VERSION"
     else
         echo "   ⚠️  Java 21 recommended but you have: $JAVA_VERSION"
+        echo ""
 
-        # Try to switch to Java 21 automatically on macOS
-        if [[ "$OSTYPE" == "darwin"* ]] && command -v /usr/libexec/java_home &> /dev/null; then
-            if /usr/libexec/java_home -v 21 &> /dev/null; then
-                export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-                export PATH="$JAVA_HOME/bin:$PATH"
+        # Try to auto-switch to Java 21
+        if [ -f "$SCRIPT_DIR/use-java-21.sh" ]; then
+            echo "   🔄 Attempting to auto-switch to Java 21..."
+            source "$SCRIPT_DIR/use-java-21.sh" 2>/dev/null
+            if [ $? -eq 0 ]; then
                 JAVA_VERSION=$(java -version 2>&1 | head -n 1)
-                echo "   ✅ Automatically switched to Java 21: $JAVA_VERSION"
-                echo "      JAVA_HOME set to: $JAVA_HOME"
+                echo "   ✅ Successfully switched to: $JAVA_VERSION"
+                echo "   ✅ JAVA_HOME set to: $JAVA_HOME"
+                echo ""
+                echo "   💡 This is temporary for your current shell session."
+                echo "      To make it permanent, add this to your ~/.zshrc or ~/.bash_profile:"
+                echo "      export JAVA_HOME=\$(/usr/libexec/java_home -v 21)"
+                echo "      export PATH=\$JAVA_HOME/bin:\$PATH"
             else
-                echo "      Java 21 not found on system"
-                echo "      Download Java 21 from: https://adoptium.net/"
-                echo "      Or manually set: export JAVA_HOME=\$(/usr/libexec/java_home -v 21)"
+                # Auto-switch failed
+                if [[ "$OSTYPE" == "darwin"* ]] && command -v /usr/libexec/java_home &> /dev/null; then
+                    if /usr/libexec/java_home -v 21 &> /dev/null; then
+                        JAVA_21_HOME=$(/usr/libexec/java_home -v 21)
+                        echo "   ℹ️  Java 21 found at: $JAVA_21_HOME"
+                        echo ""
+                        echo "   📝 Run this to switch (temporary):"
+                        echo "      source ./use-java-21.sh"
+                        echo ""
+                        echo "   📝 Or add to ~/.zshrc for permanent switch:"
+                        echo "      export JAVA_HOME=\$(/usr/libexec/java_home -v 21)"
+                        echo "      export PATH=\$JAVA_HOME/bin:\$PATH"
+                    else
+                        echo "   ❌ Java 21 not found on system"
+                        echo "      Download Java 21 from: https://adoptium.net/"
+                    fi
+                else
+                    echo "   ❌ Java 21 not found"
+                    echo "      Download Java 21 from: https://adoptium.net/"
+                fi
+                ERRORS=$((ERRORS + 1))
             fi
         else
-            echo "      Maven enforcer will verify the correct version during build"
-            echo "      If build fails, set JAVA_HOME to Java 21:"
-            echo "      export JAVA_HOME=\$(/usr/libexec/java_home -v 21)  # macOS"
+            # Helper script not found, manual instructions
+            if [[ "$OSTYPE" == "darwin"* ]] && command -v /usr/libexec/java_home &> /dev/null; then
+                echo "   🔍 Checking for available Java versions:"
+                /usr/libexec/java_home -V 2>&1 | grep -E "^\s+[0-9]+" | sed 's/^/      /'
+                echo ""
+                if /usr/libexec/java_home -v 21 &> /dev/null; then
+                    echo "   ✅ Java 21 is available"
+                    echo "   📝 Run: export JAVA_HOME=\$(/usr/libexec/java_home -v 21)"
+                else
+                    echo "   ❌ Java 21 not found - Download from: https://adoptium.net/"
+                fi
+            fi
+            ERRORS=$((ERRORS + 1))
         fi
+        echo ""
     fi
 
     # Check Maven's Java
@@ -82,10 +118,7 @@ if command -v java &> /dev/null; then
             echo "   ✅ Maven is configured to use Java 21"
         else
             echo "   ⚠️  Maven is NOT using Java 21"
-            if [[ -n "$JAVA_HOME" ]] && [[ "$JAVA_HOME" == *"21"* ]]; then
-                echo "      JAVA_HOME is set to Java 21, but Maven might be using a different version"
-                echo "      Try running: mvn clean package -DskipTests"
-            fi
+            echo "      This might cause build failures. Make sure JAVA_HOME is set correctly."
         fi
     fi
 else
@@ -156,13 +189,22 @@ if [ $ERRORS -eq 0 ]; then
     echo "✅ All prerequisites met! You're ready to build."
     echo ""
     echo "Next steps:"
+    echo "  1. ./start-dev.sh  (handles everything automatically!)"
+    echo ""
+    echo "Or manually:"
     echo "  1. cd fraud-rule-engine-api"
     echo "  2. mvn clean package -DskipTests"
     echo "  3. cd .."
     echo "  4. ./start-dev.sh"
+    echo ""
+    echo "💡 Note: Scripts will auto-switch to Java 21 if needed"
+    echo ""
+    echo "If Maven still complains about Java version, try:"
+    echo "  JAVA_HOME=\$(/usr/libexec/java_home -v 21) mvn clean package -DskipTests"
 else
     echo "❌ Found $ERRORS issue(s) - please install missing software"
     echo ""
+    echo "See docs/JAVA_21_SETUP.md for Java issues"
     echo "See docs/GETTING_STARTED.md for detailed instructions"
 fi
 echo "=========================================="

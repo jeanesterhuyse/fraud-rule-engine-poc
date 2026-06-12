@@ -202,13 +202,29 @@
                                     <message>
 ❌ ERROR: This project requires Java 21!
 
-You are currently using: ${java.version}
+Your Maven is using Java: ${java.runtime.version} (${java.vendor})
+Maven sees java.version property as: ${java.version}
 
-Java 17 or lower → Too old, download Java 21 from https://adoptium.net/
-Java 22+ → Too new, set JAVA_HOME to Java 21:
-  export JAVA_HOME=$(/usr/libexec/java_home -v 21)  # macOS
+This error means Maven is NOT detecting Java 21. To fix:
 
-Then run: mvn clean package -DskipTests
+1. Check which Java Maven sees:
+   mvn -version
+
+2. If it shows Java 25 or other version, set JAVA_HOME:
+   source ./use-java-21.sh  # sets Java 21 for current session
+
+   OR add to ~/.zshrc permanently:
+   export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+   export PATH=$JAVA_HOME/bin:$PATH
+
+3. Verify Maven now uses Java 21:
+   mvn -version | grep "Java version"
+   # Should show: Java version: 21.x.x
+
+4. Build again:
+   mvn clean package -DskipTests
+
+Need Java 21? Download from: https://adoptium.net/
                                     </message>
                                 </requireJavaVersion>
                             </rules>

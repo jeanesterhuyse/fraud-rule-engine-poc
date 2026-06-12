@@ -14,15 +14,10 @@ A real-time fraud detection system with a configurable rules engine, built with 
 **Prerequisites:** Java 21, Node.js 18+, Docker Desktop
 
 ```bash
-# Optional: Check your system has everything needed
+# Check your system has everything needed (auto-switches to Java 21!)
 ./check-prerequisites.sh
 
-# First-time setup: Build backend JAR (requires Java 21!)
-cd fraud-rule-engine-api
-mvn clean package -DskipTests
-cd ..
-
-# Start all backend services
+# Start all backend services (builds JAR automatically if needed)
 ./start-dev.sh
 
 # Start frontend (in new terminal)
@@ -33,6 +28,8 @@ npm run dev
 
 **Access:** http://localhost:3000/login-keycloak  
 **Login:** `john.smith` / `FraudDetect123!`
+
+> 💡 **Have Java 25 or other versions?** No problem! The scripts **automatically switch to Java 21** for you. See **[docs/JAVA_21_SETUP.md](docs/JAVA_21_SETUP.md)** if you encounter issues.
 
 ---
 
@@ -98,6 +95,64 @@ React UI (Next.js) ←→ Spring Boot API ←→ PostgreSQL
 
 ---
 
+## ☕ Java 21 Setup
+
+This project **requires Java 21**. If you have multiple Java versions (like Java 25), you need to ensure Maven uses Java 21.
+
+### Quick Fix (macOS)
+
+```bash
+# Set Java 21 for current terminal session
+source ./use-java-21.sh
+
+# Verify it worked
+mvn -version | grep "Java version"
+# Should show: Java version: 21.x.x
+```
+
+### Permanent Fix (macOS)
+
+Add to your `~/.zshrc` or `~/.bash_profile`:
+
+```bash
+# Use Java 21 by default
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+Then restart your terminal or run `source ~/.zshrc`.
+
+### Install Java 21
+
+If you don't have Java 21 installed:
+
+**macOS:**
+```bash
+# Option 1: Homebrew
+brew install openjdk@21
+
+# Option 2: Download from Adoptium
+# Visit: https://adoptium.net/
+```
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt-get install openjdk-21-jdk
+
+# RHEL/Fedora
+sudo dnf install java-21-openjdk-devel
+```
+
+**Verify Installation:**
+```bash
+/usr/libexec/java_home -V  # macOS - lists all Java versions
+java -version              # Should show 21.x.x
+mvn -version               # Maven should use Java 21
+```
+
+---
+
 ## 🐛 Troubleshooting
 
 See [GETTING_STARTED.md - Troubleshooting](GETTING_STARTED.md#-troubleshooting) for common issues:
@@ -106,6 +161,7 @@ See [GETTING_STARTED.md - Troubleshooting](GETTING_STARTED.md#-troubleshooting) 
 - Keycloak configuration
 - Database connection issues
 - UI errors
+- **Java version conflicts** (see [docs/JAVA_21_SETUP.md](docs/JAVA_21_SETUP.md))
 
 ---
 
