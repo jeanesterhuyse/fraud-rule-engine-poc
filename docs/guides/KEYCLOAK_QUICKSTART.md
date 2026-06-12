@@ -9,7 +9,7 @@
 ### Step 1: Start Keycloak
 
 ```bash
-cd /Users/ct303856/fraud-rule-engine-poc
+cd fraud-rule-engine-poc
 
 # Start all services (including Keycloak)
 docker-compose up -d

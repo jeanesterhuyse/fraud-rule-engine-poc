@@ -43,7 +43,7 @@ The fraud rule engine now uses **Keycloak** for authentication, replacing the pr
 ### 1. Start All Services
 
 ```bash
-cd /Users/ct303856/fraud-rule-engine-poc
+cd fraud-rule-engine-poc
 
 # Start Keycloak + all services
 docker-compose up -d

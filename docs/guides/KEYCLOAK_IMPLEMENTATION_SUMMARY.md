@@ -144,7 +144,7 @@ chmod +x setup-keycloak.sh
 
 1. **Start services:**
    ```bash
-   cd /Users/ct303856/fraud-rule-engine-poc
+   cd fraud-rule-engine-poc
    docker-compose up -d
    ```
 

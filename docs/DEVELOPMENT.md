@@ -755,7 +755,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 
 - **[NEW_USER_SETUP.md](../NEW_USER_SETUP.md)** - Complete first-time setup guide
 - **[README.md](../README.md)** - Project overview and features
-- **[GETTING_STARTED.md](../GETTING_STARTED.md)** - Quick start guide
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Quick start guide
 - **[ROLE_BASED_ACCESS_CONTROL.md](../ROLE_BASED_ACCESS_CONTROL.md)** - RBAC implementation
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and design decisions
 - **[RISK_SCORE_CALCULATION.md](RISK_SCORE_CALCULATION.md)** - Risk scoring algorithms
