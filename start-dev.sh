@@ -53,16 +53,23 @@ JAR_FILE="$SCRIPT_DIR/fraud-rule-engine-api/target/fraud-rule-engine-api-1.0.0-S
 if [ ! -f "$JAR_FILE" ]; then
     echo "❌ Backend JAR file not found!"
     echo ""
-    echo "   This is your first time running the project."
-    echo "   Please build the backend first:"
+    echo "🔨 Building backend automatically..."
     echo ""
-    echo "   cd fraud-rule-engine-api"
-    echo "   JAVA_HOME=\$(/usr/libexec/java_home -v 21) mvn clean package -DskipTests"
-    echo "   cd .."
+
+    cd "$SCRIPT_DIR/fraud-rule-engine-api"
+    JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn clean package -DskipTests
+
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "❌ Backend build failed!"
+        echo "   Please check the error messages above and try again."
+        exit 1
+    fi
+
+    cd "$SCRIPT_DIR"
     echo ""
-    echo "   Then run this script again: ./start-dev.sh"
+    echo "✅ Backend built successfully!"
     echo ""
-    exit 1
 fi
 
 # Step 0: Check port availability (non-blocking warning)
