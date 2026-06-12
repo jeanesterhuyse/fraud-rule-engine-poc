@@ -1,145 +1,238 @@
 # Development Guide - Fraud Rule Engine POC
 
-**Last Updated:** 2026-06-07
+**Last Updated:** 2026-06-12  
+**Status:** Production-Ready POC with RBAC
 
-Complete guide for running, developing, and troubleshooting the fraud rule engine.
+Complete guide for developing, testing, and troubleshooting the fraud rule engine.
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-- Docker Desktop running (4GB+ RAM)
-- Java 21 (for backend development)
-- Node.js 18+ (for frontend development)
-- Maven 3.9+
+- **Docker Desktop** (4GB+ RAM recommended)
+- **Java 21** (for backend development)
+- **Node.js 18+** (for frontend development)
+- **Maven 3.9+** (for backend builds)
 
-### Start Everything
+### First-Time Setup
 
 ```bash
-cd /Users/ct303856/fraud-rule-engine-poc
+# 1. Clone repository
+git clone <repository-url>
+cd fraud-rule-engine-poc
 
-# Backend (Docker Compose)
-make build          # Build and start all services
-make health         # Verify services are healthy
+# 2. Build backend
+cd fraud-rule-engine-api
+mvn clean package -DskipTests
+cd ..
 
-# Frontend (separate terminal)
+# 3. Start all backend services (PostgreSQL, Kafka, Keycloak, API, Grafana)
+./start-dev.sh
+
+# 4. Start frontend (in new terminal)
 cd fraud-rule-engine-ui
-npm install         # First time only
+npm install  # First time only
 npm run dev
 ```
 
 **Access:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8080
-- Kafka UI: http://localhost:8090
-- Credentials: `test` / `test`
+- **Frontend UI:** http://localhost:3000/login-keycloak
+- **API:** http://localhost:8080
+- **Grafana Dashboard:** http://localhost:3001 (no login)
+- **Keycloak Admin:** http://localhost:8180 (admin/admin)
+- **Kafka UI:** http://localhost:8090
 
-### Stop Everything
-
-```bash
-# Frontend
-pkill -f "next dev"
-
-# Backend
-make stop
-# OR
-docker-compose down
-```
+**Test Users:**
+- **Analyst:** `john.smith` / `FraudDetect123!` (full access)
+- **Viewer:** `sarah.jones` / `ViewOnly123!` (read-only)
+- **Admin:** `admin.user` / `Admin123!` (full access)
 
 ---
 
 ## Project Status
 
-### Backend: ✅ 100% Complete
-- All services running in Docker
-- Rule engine processing transactions every 10s
-- 17 REST API endpoints working
-- JWT authentication functional
-- 9 seed rules active
-- 218+ transactions processed
+### ✅ Backend: 100% Complete (Production-Ready)
+- Spring Boot 3.2.5 + Java 21
+- PostgreSQL 15 with Flyway migrations
+- Apache Kafka for event processing
+- **Keycloak OAuth2/OIDC** authentication
+- **Role-based access control (RBAC)**
+- 62 unit tests passing, 8 integration tests (optional)
+- 12 rule types with 16 active rules
+- Async processing with custom thread pool
+- Enterprise observability with Grafana + Loki
+- Custom exception handling
+- Comprehensive logging with MDC context
 
-### Frontend: 🟡 90% Complete
-- Next.js 14 app built
-- All pages created (dashboard, rules, transactions)
-- Professional UI with Tailwind CSS
-- **BLOCKER:** Authentication persistence issue (see Current Issues below)
+### ✅ Frontend: 100% Complete (Production-Ready)
+- Next.js 14 with App Router
+- TypeScript strict mode
+- **Keycloak integration** with OAuth2/OIDC
+- **Role-based UI** with usePermissions hook
+- Tailwind CSS with Capitec branding
+- Dashboard with metrics
+- Rules management (CRUD)
+- Blocklists management
+- Transactions viewer
+- Professional error handling
+
+### ✅ Infrastructure: 100% Complete
+- Docker Compose orchestration
+- 9 services (API, DB, Kafka, Keycloak, Grafana, Loki, etc.)
+- Automated setup script (`./start-dev.sh`)
+- Health checks on all services
+- Volume persistence
+- Network isolation
 
 ---
 
 ## Architecture
 
 ```
-Mock Producer → Kafka → Rule Engine → PostgreSQL
-                           ↓
-                        REST API
-                           ↓
-                      Next.js UI
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   React UI  │─────▶│  Spring Boot │─────▶│ PostgreSQL  │
+│  (Next.js)  │◀─────│     API      │◀─────│  Database   │
+│  Port 3000  │      │  Port 8080   │      │  Port 5432  │
+└─────────────┘      └──────┬───────┘      └─────────────┘
+                            │
+                            ▼
+                     ┌──────────────┐
+                     │    Kafka     │
+                     │  Port 9092   │
+                     └──────────────┘
+                            │
+                            ▼
+                     ┌──────────────┐
+                     │   Keycloak   │
+                     │  Port 8180   │
+                     └──────────────┘
 ```
 
-**5 Docker Services:**
-1. **postgres** - PostgreSQL 15 (port 5432)
-2. **zookeeper** - Kafka coordination (port 2181)
+**9 Docker Services:**
+1. **fraud-api** - Spring Boot backend (port 8080)
+2. **postgres** - PostgreSQL 15 (port 5432)
 3. **kafka** - Message broker (port 9092)
-4. **fraud-api** - Spring Boot backend (port 8080)
-5. **kafka-ui** - Monitoring UI (port 8090)
+4. **zookeeper** - Kafka coordination (port 2181)
+5. **keycloak** - OAuth2 authentication (port 8180)
+6. **loki** - Log aggregation (port 3100)
+7. **promtail** - Log collector
+8. **grafana** - Observability UI (port 3001)
+9. **kafka-ui** - Kafka monitoring (port 8090)
 
 ---
 
 ## Backend Development
 
-### Build & Run Locally
+### Build & Test
 
 ```bash
 cd fraud-rule-engine-api
 
-# Build JAR
+# Clean build
 mvn clean package -DskipTests
 
-# Run tests
+# Run unit tests (62 tests)
 mvn test
 
-# Run integration tests (requires Docker)
+# Run with integration tests (70 total)
 mvn verify
 
-# Run locally (requires Postgres + Kafka running)
+# Run specific test
+mvn test -Dtest=AmountThresholdRuleEvaluatorTest
+
+# Check code coverage
+mvn test jacoco:report
+# Open: target/site/jacoco/index.html
+```
+
+### Local Development (Without Docker)
+
+```bash
+# Prerequisites: PostgreSQL and Kafka running locally
+
+cd fraud-rule-engine-api
+
+# Run with local profile
 mvn spring-boot:run -Dspring-boot.run.profiles=local
+
+# Or with specific config
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/fraud_rule_engine
+export SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+mvn spring-boot:run
 ```
 
-### Docker Build Process
+### Docker Development Workflow
 
-The Dockerfile uses **Amazon Corretto 21** (not Alpine) to avoid certificate issues:
+```bash
+# 1. Make code changes
+# ... edit Java files in fraud-rule-engine-api/src/main/java/ ...
 
-```dockerfile
-FROM public.ecr.aws/amazoncorretto/amazoncorretto:21
-COPY target/fraud-rule-engine-api-1.0.0-SNAPSHOT.jar /
-USER 1000
-ENTRYPOINT exec java $JAVA_OPTS -jar /fraud-rule-engine-api-1.0.0-SNAPSHOT.jar
+# 2. Rebuild JAR
+cd fraud-rule-engine-api
+mvn clean package -DskipTests
+
+# 3. Restart Docker container
+cd ..
+docker-compose restart fraud-api
+
+# 4. Verify changes
+docker logs fraud-api -f
+curl http://localhost:8080/actuator/health
 ```
 
-**Important:** Build the JAR locally first, Docker just copies it.
+### Adding a New Rule Type
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for complete guide. Quick steps:
+
+1. **Add enum:**
+   ```java
+   // RuleType.java
+   public enum RuleType {
+       // ... existing types
+       NEW_RULE_TYPE
+   }
+   ```
+
+2. **Create evaluator:**
+   ```java
+   @Component
+   public class NewRuleEvaluator implements RuleEvaluationStrategy {
+       @Override
+       public boolean supports(RuleType ruleType) {
+           return ruleType == RuleType.NEW_RULE_TYPE;
+       }
+       
+       @Override
+       public Optional<RuleMatch> evaluate(Transaction txn, Rule rule) {
+           // Evaluation logic
+       }
+   }
+   ```
+
+3. **No orchestrator changes needed!** Spring auto-discovers new evaluators.
 
 ### Database Access
 
 ```bash
-# Shell access
-make db-shell
-# OR
+# Connect to PostgreSQL
 docker exec -it fraud-postgres psql -U fraud_user -d fraud_rule_engine
 
 # Useful queries
-\dt                                    # List tables
-SELECT * FROM rules;                   # View rules
-SELECT COUNT(*) FROM triggered_transactions;
+\dt                                          # List tables
+SELECT * FROM rules ORDER BY priority DESC;  # View rules
+SELECT * FROM blocked_customers;             # View blocklist
+SELECT COUNT(*) FROM triggered_transactions; # Count triggers
 SELECT * FROM triggered_transactions ORDER BY triggered_at DESC LIMIT 10;
+
+# Check Flyway migrations
+SELECT * FROM flyway_schema_history;
 ```
 
 ### Kafka Access
 
 ```bash
 # List topics
-make kafka-topics
-# OR
 docker exec -it fraud-kafka kafka-topics --list --bootstrap-server localhost:9092
 
 # Consume messages
@@ -154,28 +247,62 @@ docker exec -it fraud-kafka kafka-console-consumer \
   --topic fraud-transactions-dlq-jeanTest \
   --bootstrap-server localhost:9092 \
   --from-beginning
+
+# Use Kafka UI (easier)
+open http://localhost:8090
 ```
 
-### API Testing
+### API Testing with cURL
 
 ```bash
-# Health check
-curl http://localhost:8080/actuator/health
+# Get JWT token from Keycloak
+TOKEN=$(curl -s -X POST http://localhost:8180/realms/fraud-detection/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=fraud-ui" \
+  -d "username=john.smith" \
+  -d "password=FraudDetect123!" \
+  -d "grant_type=password" \
+  | jq -r '.access_token')
 
-# Login and get token
-make login
-# OR
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"test","password":"test"}'
-
-# Use token
-TOKEN="<your-token>"
+# Test API endpoints
 curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8080/api/v1/dashboard/summary | jq
 
 curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8080/api/v1/rules | jq
+
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/v1/triggered-transactions | jq
+
+# Health check (no auth required)
+curl http://localhost:8080/actuator/health | jq
+```
+
+### Testing RBAC
+
+```bash
+# As Fraud Analyst (can create/edit)
+TOKEN_ANALYST=$(curl -s -X POST http://localhost:8180/realms/fraud-detection/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=fraud-ui&username=john.smith&password=FraudDetect123!&grant_type=password" \
+  | jq -r '.access_token')
+
+curl -X POST http://localhost:8080/api/v1/rules \
+  -H "Authorization: Bearer $TOKEN_ANALYST" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Rule","ruleType":"AMOUNT_THRESHOLD","enabled":true,"priority":100,"thresholdAmount":10000}'
+
+# As Fraud Viewer (should get 403 Forbidden)
+TOKEN_VIEWER=$(curl -s -X POST http://localhost:8180/realms/fraud-detection/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=fraud-ui&username=sarah.jones&password=ViewOnly123!&grant_type=password" \
+  | jq -r '.access_token')
+
+curl -X POST http://localhost:8080/api/v1/rules \
+  -H "Authorization: Bearer $TOKEN_VIEWER" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Rule","ruleType":"AMOUNT_THRESHOLD","enabled":true,"priority":100,"thresholdAmount":10000}'
+# Expected: 403 Forbidden
 ```
 
 ---
@@ -190,13 +317,16 @@ cd fraud-rule-engine-ui
 # Install dependencies
 npm install
 
-# Run dev server
+# Run dev server (hot reload enabled)
 npm run dev
 
-# Build production
+# Build for production
 npm run build
 
-# Lint
+# Start production server
+npm start
+
+# Lint code
 npm run lint
 ```
 
@@ -204,89 +334,151 @@ npm run lint
 
 ```
 fraud-rule-engine-ui/
-├── app/                    # Pages (Next.js App Router)
-│   ├── layout.tsx         # Root layout with AuthProvider
-│   ├── page.tsx           # Homepage (redirects)
-│   ├── login/             # Login page
-│   ├── dashboard/         # Dashboard + Rules + Transactions
-│   └── debug/             # Debug auth state
-├── components/            # Reusable components
-│   ├── ProtectedRoute.tsx
-│   └── StatCard.tsx
-├── contexts/              # React contexts
-│   └── AuthContext.tsx    # Auth state management
-├── lib/api/               # API clients
-│   ├── client.ts          # Axios + JWT interceptor
-│   ├── auth.ts
-│   ├── dashboard.ts
-│   ├── rules.ts
-│   └── transactions.ts
-└── types/                 # TypeScript definitions
-    └── api.ts
+├── app/                           # Pages (Next.js App Router)
+│   ├── layout.tsx                # Root layout
+│   ├── providers.tsx             # KeycloakAuthProvider wrapper
+│   ├── page.tsx                  # Homepage (redirects)
+│   ├── login-keycloak/           # Keycloak login page
+│   ├── callback/                 # OAuth callback
+│   └── dashboard/                # Protected dashboard routes
+│       ├── layout.tsx            # Dashboard layout with nav
+│       ├── page.tsx              # Dashboard home
+│       ├── rules/page.tsx        # Rules management
+│       ├── blocklists/page.tsx   # Blocklists management
+│       └── transactions/page.tsx # Transactions viewer
+├── components/                    # Reusable components
+│   ├── ProtectedRoute.tsx        # Route guard
+│   ├── RuleEditModal.tsx         # Rule create/edit modal
+│   └── StatCard.tsx              # Dashboard metric cards
+├── contexts/                      # React contexts
+│   └── KeycloakAuthContext.tsx   # Keycloak auth state
+├── hooks/                         # Custom hooks
+│   └── usePermissions.ts         # Role-based permissions hook
+├── lib/                          # Utilities
+│   ├── api/                      # API clients
+│   │   ├── client.ts             # Axios + JWT interceptor
+│   │   ├── rules.ts              # Rules API
+│   │   ├── blocklists.ts         # Blocklists API
+│   │   └── transactions.ts       # Transactions API
+│   └── auth/                     # Auth utilities
+│       ├── keycloak.ts           # Keycloak client setup
+│       └── token-manager.ts      # Token management
+└── types/                        # TypeScript definitions
+    ├── api.ts                    # API types
+    └── blocklist.ts              # Blocklist types
 ```
 
-### Configuration
+### Adding a New Page
 
-- **API URL:** `http://localhost:8080/api/v1` (configured in `next.config.js`)
-- **Tailwind:** v3 (converted from v4 to fix module issues)
-- **TypeScript:** Strict mode enabled
+1. **Create page file:**
+   ```typescript
+   // app/dashboard/new-page/page.tsx
+   'use client';
+   
+   import { usePermissions } from '@/hooks/usePermissions';
+   
+   export default function NewPage() {
+     const { canEdit } = usePermissions();
+     
+     return (
+       <div>
+         <h1>New Page</h1>
+         {canEdit && <button>Edit</button>}
+       </div>
+     );
+   }
+   ```
+
+2. **Add to navigation:**
+   ```typescript
+   // app/dashboard/layout.tsx
+   const navigation = [
+     // ... existing items
+     { name: 'New Page', href: '/dashboard/new-page', current: pathname?.startsWith('/dashboard/new-page') },
+   ];
+   ```
+
+### Using the Permissions Hook
+
+```typescript
+import { usePermissions } from '@/hooks/usePermissions';
+
+export default function MyComponent() {
+  const { canEdit, isFraudViewer, isFraudAnalyst, isAdmin } = usePermissions();
+  
+  return (
+    <div>
+      {canEdit && <button>Create</button>}
+      {isFraudViewer && <p>Read-only access</p>}
+    </div>
+  );
+}
+```
+
+### Environment Variables
+
+Create `.env.local` for local overrides:
+
+```bash
+# API URL (default: http://localhost:8080/api/v1)
+NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+```
 
 ---
 
 ## Docker Commands
 
-### Using Make (Recommended)
+### Service Management
 
 ```bash
-make build          # Build and start all services
-make start          # Start stopped services
-make stop           # Stop all services
-make restart        # Restart all services
-make health         # Check service health
-make logs           # View all logs
-make backend-logs   # View backend logs only
-make login          # Get JWT token
-make db-shell       # PostgreSQL shell
-make kafka-topics   # List Kafka topics
-make clean          # Remove everything (containers + volumes)
-```
+# Start all services
+./start-dev.sh
 
-### Using Docker Compose Directly
-
-```bash
-# Start
-docker-compose up -d --build
-
-# Status
-docker-compose ps
-
-# Logs
-docker-compose logs -f
-docker-compose logs -f fraud-api
-
-# Stop
-docker-compose stop
-
-# Stop and remove
+# Stop all services
 docker-compose down
 
-# Remove volumes too (deletes data!)
+# Stop and remove volumes (fresh start)
 docker-compose down -v
+
+# Restart specific service
+docker-compose restart fraud-api
+docker-compose restart keycloak
+
+# View logs
+docker-compose logs -f                  # All services
+docker logs fraud-api -f                # API only
+docker logs fraud-keycloak -f           # Keycloak only
+docker logs fraud-grafana -f            # Grafana only
+
+# Check service health
+docker-compose ps                       # All services
+docker inspect fraud-api | grep Health  # Specific service
 ```
 
-### Service Health Checks
+### Rebuilding Services
 
-All services have health checks that must pass before dependent services start:
-
-- **postgres:** `pg_isready`
-- **zookeeper:** `echo srvr | nc localhost 2181`
-- **kafka:** `kafka-broker-api-versions`
-- **fraud-api:** `curl http://localhost:8080/actuator/health`
-
-Check with:
 ```bash
-docker-compose ps
-# All should show "healthy" status
+# Rebuild API after code changes
+cd fraud-rule-engine-api
+mvn clean package -DskipTests
+cd ..
+docker-compose up -d --build fraud-api
+
+# Rebuild all services
+docker-compose up -d --build
+```
+
+### Resource Management
+
+```bash
+# Check resource usage
+docker stats
+
+# Clean up unused resources
+docker system prune -a
+
+# Remove specific image
+docker rmi fraud-rule-engine-poc-fraud-api:latest
 ```
 
 ---
@@ -297,101 +489,129 @@ docker-compose ps
 
 **Check logs:**
 ```bash
-make backend-logs
-# Look for errors about Kafka, Postgres, or migrations
+docker logs fraud-api --tail 50
 ```
 
 **Common issues:**
-1. **Port conflicts:** Another service using 5432, 9092, or 8080
+
+1. **JAR file missing:**
+   ```bash
+   ls -l fraud-rule-engine-api/target/*.jar
+   # If missing:
+   cd fraud-rule-engine-api
+   mvn clean package -DskipTests
+   docker-compose restart fraud-api
+   ```
+
+2. **Port conflict (8080):**
    ```bash
    lsof -i :8080
-   lsof -i :5432
-   lsof -i :9092
+   kill -9 <PID>
    ```
 
-2. **Kafka not ready:** Wait 30s for Kafka to be healthy
+3. **Database not ready:**
    ```bash
-   docker-compose ps kafka
+   docker exec fraud-postgres pg_isready -U fraud_user
+   # If not ready, restart:
+   docker-compose restart postgres
+   sleep 10
+   docker-compose restart fraud-api
    ```
 
-3. **Database migration failed:** Check flyway logs
+4. **Kafka not ready:**
    ```bash
-   docker-compose logs fraud-api | grep -i flyway
+   docker logs fraud-kafka --tail 20
+   # Wait 30 seconds, then:
+   docker-compose restart fraud-api
    ```
-
-### Kafka Issues
-
-**Topics not created:**
-```bash
-# Manually create topic
-docker exec -it fraud-kafka kafka-topics \
-  --create \
-  --topic fraud-transactions-jeanTest \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
-```
-
-**Consumer lag:**
-```bash
-# Check consumer group
-docker exec -it fraud-kafka kafka-consumer-groups \
-  --bootstrap-server localhost:9092 \
-  --group fraud-rule-engine-group \
-  --describe
-```
 
 ### Frontend Issues
 
 **Module errors:**
 ```bash
 cd fraud-rule-engine-ui
-rm -rf .next node_modules
+rm -rf .next node_modules package-lock.json
 npm install
 npm run dev
 ```
 
-**Auth not working:**
-- Check `/debug` page at http://localhost:3000/debug
-- Check browser console for errors
-- Verify backend is running: `curl http://localhost:8080/actuator/health`
-- Check Network tab for API calls
+**Keycloak auth not working:**
+```bash
+# Check Keycloak is running
+curl http://localhost:8180/health/ready
 
-**CORS errors:**
-- Backend CORS configured for `http://localhost:3000`
-- Check SecurityConfig.java
+# Verify realm exists
+curl http://localhost:8180/realms/fraud-detection
+
+# Re-run setup script
+./setup-keycloak.sh
+```
+
+**Port conflict (3000):**
+```bash
+lsof -i :3000
+kill -9 <PID>
+npm run dev
+```
+
+### Keycloak Issues
+
+**Realm not configured:**
+```bash
+# Check if realm exists
+curl http://localhost:8180/realms/fraud-detection
+
+# If 404, run setup:
+./setup-keycloak.sh
+```
+
+**Database error:**
+```bash
+# Keycloak DB might not exist
+docker exec fraud-postgres psql -U fraud_user -d postgres -c "CREATE DATABASE keycloak;"
+docker exec fraud-postgres psql -U fraud_user -d keycloak -c "CREATE SCHEMA keycloak AUTHORIZATION fraud_user;"
+docker-compose restart keycloak
+sleep 30
+./setup-keycloak.sh
+```
+
+### Grafana Issues
+
+**Dashboard not loading:**
+```bash
+# Check Grafana is running
+curl http://localhost:3001/api/health
+
+# Check Loki datasource
+docker logs fraud-loki --tail 20
+
+# Restart Grafana
+docker-compose restart grafana
+```
+
+**Dashboard missing:**
+```bash
+# Dashboard should be in grafana-dashboards/
+ls -l grafana-dashboards/fraud-detection-logs.json
+
+# Check dashboard provisioning
+docker exec fraud-grafana ls -l /etc/grafana/provisioning/dashboards/
+```
 
 ### Database Issues
-
-**Cannot connect:**
-```bash
-# Check if postgres is running
-docker-compose ps postgres
-
-# Test connection
-docker exec -it fraud-postgres pg_isready -U fraud_user
-```
 
 **Reset database:**
 ```bash
 docker-compose down -v
-docker-compose up -d
-# Migrations will run automatically
+./start-dev.sh
 ```
 
-**Force re-run migrations:**
+**Manual migration:**
 ```bash
-# Stop backend
-docker-compose stop fraud-api
-
-# Clean database (WARNING: deletes all data)
-docker exec -it fraud-postgres psql -U fraud_user -d fraud_rule_engine -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-
-# Restart backend (migrations will run)
-docker-compose up -d fraud-api
+docker exec -it fraud-postgres psql -U fraud_user -d fraud_rule_engine -c "SELECT * FROM flyway_schema_history;"
 ```
 
-### Docker Resource Issues
+### Performance Issues
 
 **Check resource usage:**
 ```bash
@@ -401,84 +621,9 @@ docker stats
 **Increase Docker resources:**
 1. Open Docker Desktop
 2. Settings → Resources
-3. Increase Memory to 6-8GB (currently need 4GB minimum)
+3. Increase Memory to 6-8GB
 4. Increase CPUs to 4
 5. Apply & Restart
-
-### Service Health Checks
-
-All services have health checks. Check status:
-```bash
-docker-compose ps
-# All should show "healthy" status
-```
-
-**Individual health checks:**
-```bash
-# PostgreSQL
-docker exec -it fraud-postgres pg_isready -U fraud_user
-
-# Kafka
-docker exec -it fraud-kafka kafka-broker-api-versions --bootstrap-server localhost:9092
-
-# Backend API
-curl http://localhost:8080/actuator/health
-```
-
-### Mock Producer Issues
-
-**Check if mock producer is enabled:**
-```bash
-docker exec -it fraud-api env | grep MOCK_PRODUCER
-# Should see: APP_MOCK_PRODUCER_ENABLED=true
-```
-
-**Check mock producer logs:**
-```bash
-docker-compose logs fraud-api | grep -i "mock"
-```
-
----
-
-## Current Issues
-
-### 🔴 CRITICAL: Frontend Authentication Persistence
-
-**Problem:** Token not persisting in localStorage after login
-
-**Symptoms:**
-- Login succeeds (backend returns token)
-- Console shows "Login successful"
-- But token doesn't save to localStorage
-- Navigation redirects back to login
-- `/debug` page shows "Has Token: No"
-
-**Root Cause (Theory):**
-- Next.js SSR/hydration clearing localStorage
-- Race condition between setState and router.push
-- AuthProvider re-mounting on navigation
-
-**Debug Steps:**
-1. Go to http://localhost:3000/debug
-2. Check if token is present
-3. Open browser console
-4. Try login and watch for "AuthContext:" logs
-5. Check Network tab for /auth/login response
-
-**Next Fixes to Try:**
-1. Add setTimeout delay before redirect (100ms)
-2. Force synchronous localStorage verification
-3. Try sessionStorage or cookies instead
-4. Prevent AuthProvider re-mount
-5. Add extensive localStorage operation logging
-
-**Files Involved:**
-- `fraud-rule-engine-ui/contexts/AuthContext.tsx`
-- `fraud-rule-engine-ui/lib/api/auth.ts`
-- `fraud-rule-engine-ui/app/login/page.tsx`
-
-**Workaround:**
-Backend APIs work perfectly via curl/Postman.
 
 ---
 
@@ -489,187 +634,178 @@ Backend APIs work perfectly via curl/Postman.
 ```bash
 cd fraud-rule-engine-api
 
-# Unit tests
+# Unit tests (62 tests)
 mvn test
 
-# Integration tests (Testcontainers)
+# Integration tests (8 tests, requires Docker)
 mvn verify
 
-# Specific test
-mvn test -Dtest=RuleEvaluatorOrchestratorTest
-
-# With coverage
+# Test coverage report
 mvn test jacoco:report
+open target/site/jacoco/index.html
+
+# Test specific rule evaluator
+mvn test -Dtest=CustomerBlocklistRuleEvaluatorTest
+mvn test -Dtest=CrossBorderHighRiskRuleEvaluatorTest
+```
+
+**Expected Results:**
+```
+Tests run: 62, Failures: 0, Errors: 0, Skipped: 8
+BUILD SUCCESS
 ```
 
 ### Frontend Tests
 
+Currently no automated tests. Manual testing:
+
+1. Login as each user role
+2. Verify RBAC (buttons visible/hidden)
+3. Test CRUD operations
+4. Check error handling
+
+### End-to-End Testing
+
+**Full stack test:**
 ```bash
-cd fraud-rule-engine-ui
+# 1. Start backend
+./start-dev.sh
 
-# (Not yet implemented)
-npm test
+# 2. Verify services
+docker-compose ps  # All should be healthy
+curl http://localhost:8080/actuator/health  # Should be UP
+
+# 3. Start frontend
+cd fraud-rule-engine-ui && npm run dev
+
+# 4. Manual testing
+# - Open http://localhost:3000/login-keycloak
+# - Login as john.smith / FraudDetect123!
+# - Create a new rule
+# - Verify in database: docker exec -it fraud-postgres psql -U fraud_user -d fraud_rule_engine -c "SELECT * FROM rules;"
+# - Login as sarah.jones / ViewOnly123!
+# - Verify buttons are hidden (read-only)
 ```
-
-### Manual E2E Testing
-
-**Backend:**
-1. `make build` - Start all services
-2. `make health` - Verify healthy
-3. `make login` - Get token
-4. Test API endpoints with curl
-
-**Frontend:**
-1. `npm run dev` - Start frontend
-2. Open http://localhost:3000
-3. Login with test/test
-4. Navigate dashboard, rules, transactions
-5. Check /debug for auth state
 
 ---
 
-## Configuration Files
+## Configuration
 
-### Backend
+### Backend Profiles
 
-**application.yml** - Base config (shared)
-```yaml
-spring:
-  application:
-    name: fraud-rule-engine-api
-server:
-  port: 8080
+**docker** (default in Docker Compose):
+- PostgreSQL: postgres:5432
+- Kafka: kafka:29092
+- Keycloak: keycloak:8080
+
+**local** (for local development):
+- PostgreSQL: localhost:5432
+- Kafka: localhost:9092
+
+**test** (for unit/integration tests):
+- H2 in-memory database
+- Embedded Kafka
+
+### Environment Variables
+
+**Backend (.env or docker-compose.yml):**
+```bash
+SPRING_PROFILES_ACTIVE=docker
+SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fraud_rule_engine
+SPRING_DATASOURCE_USERNAME=fraud_user
+SPRING_DATASOURCE_PASSWORD=fraud_pass
+SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+APP_MOCK_PRODUCER_ENABLED=true
+APP_MOCK_PRODUCER_INTERVAL_MS=10000
 ```
 
-**application-docker.yml** - Docker profile
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://postgres:5432/fraud_rule_engine
-  kafka:
-    bootstrap-servers: kafka:29092
+**Frontend (.env.local):**
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 ```
-
-**application-local.yml** - Local dev (uses real AWS MSK)
-```yaml
-spring:
-  kafka:
-    bootstrap-servers: b-2.afs1905417999612nprms.k3723w.c2.kafka.af-south-1.amazonaws.com:9098
-    properties:
-      security.protocol: SASL_SSL
-```
-
-**application-test.yml** - Tests (H2 in-memory)
-
-### Frontend
-
-**next.config.js**
-```javascript
-env: {
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
-}
-```
-
-**tailwind.config.js** - Tailwind v3 configuration
 
 ---
 
-## Performance Notes
+## Code Quality Standards
 
-- **Rule Engine:** Processes transaction in ~10-50ms
-- **Kafka Consumer:** Consumes every 10 seconds
-- **Mock Producer:** Generates 1 transaction per 10 seconds
-- **Database:** Indexed queries <10ms
-- **API Response:** Most endpoints <100ms
+### Backend (Java)
 
----
+- **Lombok** for boilerplate reduction
+- **@RequiredArgsConstructor** for DI
+- **Strategy Pattern** for rule evaluators
+- **@Async** for async processing
+- **@PreAuthorize** for RBAC
+- **RoleConstants** for centralized role strings
+- **Comprehensive Javadoc** on all public APIs
+- **SLF4J** logging with MDC context
 
-## Data
+### Frontend (TypeScript)
 
-### Seed Rules (9 total)
-
-1. Large Transaction Alert (AMOUNT_THRESHOLD, priority 200)
-2. Rapid Transaction Velocity (VELOCITY, priority 150)
-3. High-Risk Country: Russia (GEOGRAPHIC_ANOMALY, priority 180)
-4. High-Risk Country: North Korea (GEOGRAPHIC_ANOMALY, priority 180)
-5. Gambling Merchant Alert (MERCHANT_RISK, priority 120)
-6. Structuring Detection (AMOUNT_RANGE, priority 170)
-7. Rapid-Fire Transactions (RAPID_FIRE, priority 160)
-8. Cryptocurrency Exchange (MERCHANT_RISK, priority 110)
-9. Very Large Transaction - Disabled (AMOUNT_THRESHOLD, priority 190, disabled)
-
-### Live Metrics
-
-After ~5 minutes of running:
-- 200+ transactions generated
-- 218+ triggered transactions
-- Average risk score: ~80
-- Total flagged amount: 4+ million ZAR
+- **TypeScript strict mode** enabled
+- **React Hooks** (no class components)
+- **Custom hooks** for reusable logic (usePermissions)
+- **Memoization** with useMemo for performance
+- **Error boundaries** and try-catch
+- **Proper types** (no `any` except error handling)
+- **ESLint** configuration
 
 ---
 
-## Next Steps
+## Documentation
 
-### Critical
-1. **Fix frontend authentication persistence** (blocking)
-
-### High Priority
-2. **Update styling to match fraud_tyr design system**
-   - Extract tyr color palette
-   - Update Tailwind config
-   - Restyle all components
-
-### Enhancements
-3. Add Recharts visualizations to dashboard
-4. Create/edit rule forms
-5. Advanced filtering and search
-6. Real-time updates (WebSockets)
-
-See [BACKLOG.md](./BACKLOG.md) for complete list.
+- **[NEW_USER_SETUP.md](../NEW_USER_SETUP.md)** - Complete first-time setup guide
+- **[README.md](../README.md)** - Project overview and features
+- **[GETTING_STARTED.md](../GETTING_STARTED.md)** - Quick start guide
+- **[ROLE_BASED_ACCESS_CONTROL.md](../ROLE_BASED_ACCESS_CONTROL.md)** - RBAC implementation
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and design decisions
+- **[RISK_SCORE_CALCULATION.md](RISK_SCORE_CALCULATION.md)** - Risk scoring algorithms
+- **[API README](../fraud-rule-engine-api/README.md)** - Backend API documentation
 
 ---
 
-## Useful Commands Cheat Sheet
+## Quick Commands Reference
 
 ```bash
-# Quick status
-make health
+# Start everything
+./start-dev.sh
+cd fraud-rule-engine-ui && npm run dev
 
-# View live logs
-make logs
-make backend-logs
+# Stop everything
+docker-compose down
+# (Frontend: Ctrl+C)
 
-# Database queries
-make db-shell
-SELECT COUNT(*) FROM triggered_transactions;
+# Fresh restart
+docker-compose down -v
+./start-dev.sh
 
-# Kafka monitoring
-make kafka-topics
-open http://localhost:8090
+# View logs
+docker logs fraud-api -f
+docker logs fraud-keycloak -f
 
-# Get auth token
-make login
-export TOKEN=$(cat .token)
+# Database shell
+docker exec -it fraud-postgres psql -U fraud_user -d fraud_rule_engine
 
 # Test API
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/v1/dashboard/summary | jq
+curl http://localhost:8080/actuator/health
 
-# Clean restart
-make clean
-make build
+# Rebuild backend
+cd fraud-rule-engine-api
+mvn clean package -DskipTests
+docker-compose restart fraud-api
 
-# Frontend debug
-open http://localhost:3000/debug
+# Run tests
+mvn test                    # Unit tests
+mvn verify                  # Unit + Integration
+
+# Access services
+open http://localhost:3000/login-keycloak  # Frontend
+open http://localhost:3001                  # Grafana
+open http://localhost:8090                  # Kafka UI
+open http://localhost:8180                  # Keycloak Admin
 ```
 
 ---
 
-## Resources
-
-- [README.md](./README.md) - Project overview and quick start
-- [PROJECT_STATUS.md](./PROJECT_STATUS.md) - Current status and known issues
-- [SCHEMA_REVIEW.md](./SCHEMA_REVIEW.md) - Database design and API reference
-- [BACKLOG.md](./BACKLOG.md) - Feature backlog and priorities
-- [docs/adr/](./docs/adr/) - Architecture Decision Records
-- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Detailed system architecture
+**Last Reviewed:** 2026-06-12  
+**All Tests:** ✅ 62 passing (0 failures)  
+**Status:** Production-ready POC
