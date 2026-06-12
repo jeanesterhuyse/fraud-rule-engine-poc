@@ -23,6 +23,8 @@ export const rulesService = {
   },
 
   update: async (id: number, rule: Partial<Rule>): Promise<Rule> => {
+    console.log('UPDATE RULE - ID:', id, 'Type:', typeof id, 'Rule:', rule);
+    console.log('UPDATE RULE - URL will be:', `/rules/${id}`);
     const response = await apiClient.put<Rule>(`/rules/${id}`, rule);
     return response.data;
   },

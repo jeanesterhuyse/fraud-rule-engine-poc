@@ -6,6 +6,7 @@ import com.fraud.ruleengine.security.RoleConstants;
 import com.fraud.ruleengine.service.RuleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Write operations require FRAUD_ANALYST or ADMIN role.
  * Read operations are accessible to all authenticated users.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/rules")
 @RequiredArgsConstructor
@@ -57,6 +59,7 @@ public class RuleController {
         @PathVariable Long id,
         @Valid @RequestBody Rule rule
     ) {
+        log.info("Updating rule {} with data: {}", id, rule);
         Rule updatedRule = ruleService.update(id, rule);
         return ResponseEntity.ok(updatedRule);
     }
