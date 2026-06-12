@@ -11,8 +11,13 @@ A real-time fraud detection system with a configurable rules engine, built with 
 
 ## 🚀 Quick Start
 
+**Prerequisites:** Java 21, Node.js 18+, Docker Desktop
+
 ```bash
-# First-time setup: Build backend JAR
+# Optional: Check your system has everything needed
+./check-prerequisites.sh
+
+# First-time setup: Build backend JAR (requires Java 21!)
 cd fraud-rule-engine-api
 mvn clean package -DskipTests
 cd ..

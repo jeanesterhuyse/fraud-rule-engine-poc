@@ -29,6 +29,23 @@ cd fraud-rule-engine-ui && npm run dev
 
 ### Prerequisites
 
+**🔍 Quick Check (Recommended):** 
+
+Before proceeding, run this script to verify your system is ready:
+
+```bash
+./check-prerequisites.sh
+```
+
+This will check:
+- ✅ Docker & Docker Compose installed and running
+- ✅ Java 21 (not 17, not 25 - exactly 21)
+- ✅ Maven configured to use Java 21
+- ✅ Node.js 18+
+- ✅ npm
+
+**Manual Verification:**
+
 Before you begin, ensure you have:
 
 1. **Docker Desktop** (4GB+ RAM recommended)
@@ -39,9 +56,10 @@ Before you begin, ensure you have:
    - Download: https://nodejs.org/
    - Verify: `node --version` (should be 18.x or higher)
 
-3. **Java 21** (optional - only for backend development)
-   - Download: https://adoptium.net/
-   - Verify: `java --version` (should be 21.x)
+3. **Java 21** (**REQUIRED** - for building backend)
+   - Download: https://adoptium.net/ (Eclipse Temurin JDK 21)
+   - Verify: `java -version` (must show version 21.x.x)
+   - **Important:** Java 17 or lower will NOT work - you must use Java 21
 
 4. **Git** (to clone the repository)
    - Verify: `git --version`
@@ -50,6 +68,8 @@ Before you begin, ensure you have:
 - RAM: 4GB minimum (8GB recommended)
 - Disk Space: 5GB free space
 - Ports: 3000, 3001, 5050, 5432, 8080, 8090, 8180, 9092, 2181, 3100 must be available
+
+> **💡 Tip:** If `check-prerequisites.sh` reports issues, install the missing software before continuing. The build will fail with cryptic errors if prerequisites are missing.
 
 ### Step 1: Clone the Repository
 
@@ -62,6 +82,14 @@ cd fraud-rule-engine-poc
 
 **Important:** You must build the JAR file before running `start-dev.sh` for the first time.
 
+**Verify Java 21 first:**
+```bash
+java -version
+# Must show: openjdk version "21.0.x" or similar
+# If not, install Java 21 from https://adoptium.net/
+```
+
+**Build the JAR:**
 ```bash
 cd fraud-rule-engine-api
 mvn clean package -DskipTests
@@ -69,6 +97,13 @@ cd ..
 ```
 
 **Expected Output:** `BUILD SUCCESS`
+
+> **🛡️ Maven Enforcer Protection:** The build includes a Maven Enforcer plugin that will **immediately fail** if you're not using Java 21, with a clear error message telling you how to fix it.
+
+**Common Build Errors:**
+- ❌ `Java 21 REQUIRED but you are using: 17.0.x` → Maven enforcer blocked the build, install Java 21
+- ❌ `Java 21 REQUIRED but you are using: 25.0.x` → Maven enforcer blocked the build, set JAVA_HOME to Java 21
+- ❌ `ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag` → Old error (now caught by enforcer)
 
 **Verify JAR exists:**
 ```bash
@@ -413,6 +448,47 @@ SELECT id, transaction_id, rule_name, risk_score FROM triggered_transactions ORD
 ---
 
 ## ❌ Troubleshooting
+
+### Build Fails with Java Error
+
+**Symptom**: `ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag :: UNKNOWN`
+
+**Cause**: Maven is using the wrong Java version. This project requires **exactly Java 21**.
+
+Common scenarios:
+- ❌ Using Java 17 or lower → Too old
+- ❌ Using Java 22, 23, 24, 25 → Too new
+- ✅ Must use Java 21
+
+**Solution**: Force Maven to use Java 21
+
+```bash
+# Check what Java versions you have installed
+java -version
+mvn -version
+
+# If Maven is using wrong Java, set JAVA_HOME to Java 21:
+
+# macOS - Find Java 21
+/usr/libexec/java_home -V
+# Then set it:
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+
+# Linux - Find Java 21
+update-alternatives --list java
+# Then set it:
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64  # or your Java 21 path
+
+# Verify Maven now uses Java 21
+mvn -version
+# Should show: Java version: 21.0.x
+
+# Now rebuild:
+cd fraud-rule-engine-api
+mvn clean package -DskipTests
+```
+
+**Note:** As of Maven Enforcer plugin addition, the build will now fail early with a clear error message if you're not using Java 21.
 
 ### Port Already in Use
 
