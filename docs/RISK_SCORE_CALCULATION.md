@@ -1,6 +1,6 @@
 # Risk Score Calculation
 
-**Last Updated:** June 9, 2026
+**Last Updated:** June 11, 2026
 
 Complete documentation of how risk scores are calculated for triggered fraud transactions.
 
@@ -10,11 +10,64 @@ Complete documentation of how risk scores are calculated for triggered fraud tra
 
 Each fraud rule calculates a **risk score** (0-100) when triggered. The score reflects the severity of the suspicious behavior detected. Higher scores indicate more serious fraud indicators.
 
+The system currently implements **12 distinct rule types**, each with its own risk scoring algorithm optimized for the specific fraud pattern it detects.
+
 ---
 
 ## Rule-Specific Calculations
 
-### 1. Amount Threshold (50-100)
+### 1. Customer Blocklist (Fixed: 100)
+
+**Triggers when:** Transaction involves a customer on the blocklist
+
+**Score:** Always **100** (Maximum severity)
+
+**Example:**
+- Customer ID: CUST-BLOCKED-001
+- Status: Blocked for previous fraud
+- Action: Instant block
+
+**Logic:** Blocklisted customers have confirmed fraud history. Immediate intervention required. Highest possible risk score.
+
+**Code:** `CustomerBlocklistRuleEvaluator.java`
+
+---
+
+### 2. Merchant Blocklist (Fixed: 95)
+
+**Triggers when:** Transaction involves a merchant on the blocklist
+
+**Score:** Always **95** (Near-maximum severity)
+
+**Example:**
+- Merchant: "Suspicious Electronics Ltd"
+- Status: Known fraudulent merchant
+- Action: Instant block
+
+**Logic:** Blocklisted merchants have confirmed fraud activity. Slightly lower than customer blocklist as merchant may have legitimate customers mixed in.
+
+**Code:** `MerchantBlocklistRuleEvaluator.java`
+
+---
+
+### 3. Cross-Border High Risk (Fixed: 90)
+
+**Triggers when:** Customer makes transaction in high-risk foreign country
+
+**Score:** Always **90**
+
+**Example:**
+- Customer home: South Africa (ZAF)
+- Transaction country: Russia (RUS)
+- Action: High-priority review
+
+**Logic:** Cross-border transactions to sanctioned or high-fraud countries represent significant risk, especially combined with geographic anomalies.
+
+**Code:** `CrossBorderHighRiskRuleEvaluator.java`
+
+---
+
+### 4. Amount Threshold (50-100)
 
 **Triggers when:** Transaction amount exceeds configured threshold
 
@@ -37,30 +90,7 @@ Final Score: min(100, Base + Additional)
 
 ---
 
-### 2. Velocity (60-100)
-
-**Triggers when:** Customer makes multiple transactions within a time window
-
-**Formula:**
-```
-Base Score: 60
-Additional: min(40, excess_count × 10)
-Final Score: min(100, Base + Additional)
-```
-
-**Example:**
-- Threshold: 5 transactions in 10 minutes
-- Actual: 8 transactions
-- Excess: 3 transactions
-- Calculation: 60 + (3 × 10) = 90
-
-**Logic:** Exceeding velocity thresholds indicates rapid, potentially automated fraud behavior. Each extra transaction adds 10 points.
-
-**Code:** `VelocityRuleEvaluator.java`
-
----
-
-### 3. Geographic Anomaly (Fixed: 80)
+### 5. Geographic Anomaly (Fixed: 75)
 
 **Triggers when:** Transaction originates from high-risk country
 
@@ -117,7 +147,7 @@ Final Score: min(100, Base + Additional)
 
 ---
 
-### 6. Amount Range (Fixed: 70)
+### 9. Amount Range (Fixed: 70)
 
 **Triggers when:** Transaction amount falls within suspicious range
 
@@ -133,24 +163,96 @@ Final Score: min(100, Base + Additional)
 
 ---
 
-### 7. Dormant Account (40-100)
+### 10. Merchant Risk (Fixed: 65)
 
-**Triggers when:** Previously inactive account suddenly becomes active
+**Triggers when:** Transaction involves high-risk merchant category
+
+**Score:** Always **65**
+
+**Example Categories:**
+- Gambling
+- Cryptocurrency Exchanges
+- Money Transfer Services
+- Adult Content
+
+**Logic:** Certain merchant categories are frequently associated with fraud, money laundering, or require enhanced monitoring.
+
+**Code:** `MerchantRiskRuleEvaluator.java`
+
+---
+
+### 11. Time of Day Anomaly (Fixed: 60)
+
+**Triggers when:** Transaction occurs during unusual hours (2-5 AM)
+
+**Score:** Always **60**
+
+**Example:**
+- Transaction time: 03:45 AM
+- Configured hours: 2:00 AM - 5:00 AM
+- Action: Medium-priority review
+
+**Logic:** Transactions during unusual hours (late night/early morning) may indicate unauthorized access or fraud, especially if inconsistent with customer's normal patterns.
+
+**Code:** `TimeOfDayAnomalyRuleEvaluator.java`
+
+---
+
+### 12. Round Amount (55-65)
+
+**Triggers when:** Large transaction with suspiciously round amount
+
+**Score:** 55-65 (based on roundness and amount)
+
+**Example:**
+- R10,000.00 (perfectly round)
+- R50,000.00 (perfectly round, large)
+- Pattern: Card testing or structuring
+
+**Logic:** Criminals often test stolen cards with round amounts. The larger and rounder the amount, the higher the score.
+
+**Code:** `RoundAmountRuleEvaluator.java`
+
+---
+
+### 13. Currency Mismatch (Fixed: 55)
+
+**Triggers when:** Transaction uses foreign currency in foreign country
+
+**Score:** Always **55**
+
+**Example:**
+- Customer home country: ZAF
+- Customer home currency: ZAR
+- Transaction country: USA
+- Transaction currency: EUR (not USD or ZAR)
+
+**Logic:** Using a third currency in a foreign country is unusual and may indicate money laundering or card cloning.
+
+**Code:** `CurrencyMismatchRuleEvaluator.java`
+
+---
+
+### 14. Large Withdrawal (50-80)
+
+**Triggers when:** Large ATM or cash withdrawal
 
 **Formula:**
 ```
-Base Score: 40
-Additional: Scaled based on dormancy period
+Base Score: 50
+Additional: Scaled based on amount over threshold
+Final Score: min(80, Base + Additional)
 ```
 
 **Example:**
-- Account dormant for 30 days: Score ~50
-- Account dormant for 90 days: Score ~65
-- Account dormant for 180+ days: Score ~80-90
+- Threshold: R5,000
+- Withdrawal: R15,000
+- Excess: R10,000 (200% over)
+- Score: ~75
 
-**Logic:** Longer dormancy periods followed by sudden activity often indicate compromised accounts.
+**Logic:** Large cash withdrawals, especially at ATMs, may indicate compromised cards or money laundering. Score scales with withdrawal size.
 
-**Code:** `DormantAccountRuleEvaluator.java`
+**Code:** `LargeWithdrawalRuleEvaluator.java`
 
 ---
 
@@ -162,15 +264,18 @@ If a single transaction triggers multiple rules, **each rule generates its own t
 
 **Example:**
 
-Transaction: R25,000 from Russia, 8th transaction in 10 minutes
+Transaction: R25,000 from Russia by blocklisted customer
 
 | Rule | Type | Score | Reason |
 |------|------|-------|--------|
+| Blocked Customer Alert | Customer Blocklist | 100 | Customer on blocklist |
+| Cross-Border Alert | Cross-Border High Risk | 90 | ZAF customer in Russia |
 | Large Transaction Alert | Amount Threshold | 85 | Exceeded R20,000 threshold |
-| High-Risk Country | Geographic Anomaly | 80 | Transaction from Russia |
-| Rapid Velocity | Velocity | 90 | 8 transactions in 10 minutes (threshold: 5) |
+| High-Risk Country | Geographic Anomaly | 75 | Transaction from Russia |
 
-**Database Records:** 3 separate entries in `triggered_transactions` table
+**Database Records:** 4 separate entries in `triggered_transactions` table
+
+**Combined Risk Interpretation:** Multiple high-scoring rules indicate severe fraud risk requiring immediate intervention.
 
 ---
 
@@ -186,7 +291,7 @@ FROM triggered_transactions
 WHERE risk_score IS NOT NULL
 ```
 
-**Current System:** ~83 average (high-risk system)
+**Current System:** Average varies based on active rules and transaction patterns
 
 ### Highest Risk Score
 
@@ -216,9 +321,11 @@ GROUP BY rule_type
 | Score Range | Risk Level | Recommended Action | Example Scenarios |
 |-------------|------------|-------------------|-------------------|
 | **0-40** | Low | Monitor only | Small excess over threshold, minor patterns |
-| **41-60** | Medium | Review within 24h | Moderate velocity, medium amounts |
-| **61-80** | High | Investigate within 4h | High-risk countries, suspicious patterns |
-| **81-100** | Critical | Immediate action | Multiple rule triggers, extreme patterns |
+| **41-60** | Medium | Review within 24h | Time of day anomaly, currency mismatch, round amounts |
+| **61-80** | High | Investigate within 4h | High-risk countries, CNP fraud, amount range structuring, large withdrawals |
+| **81-100** | Critical | Immediate action | Blocklists, cross-border high risk, multiple rule triggers |
+
+**Note:** Scores 95-100 are reserved for the most severe cases (blocklists) requiring instant intervention.
 
 ---
 
@@ -275,14 +382,19 @@ All risk score calculations are in:
 fraud-rule-engine-api/src/main/java/com/fraud/ruleengine/service/rule/strategy/
 ```
 
-**Files:**
-- `AmountThresholdRuleEvaluator.java` - Lines 62-69
-- `VelocityRuleEvaluator.java` - Lines 82-86
-- `GeographicAnomalyRuleEvaluator.java` - Line 52 (fixed score)
-- `MerchantRiskRuleEvaluator.java` - Category mapping
-- `RapidFireRuleEvaluator.java` - Similar to velocity
-- `AmountRangeRuleEvaluator.java` - Fixed score
-- `DormantAccountRuleEvaluator.java` - Dormancy scaling
+**Current Evaluators (12 Types):**
+1. `CustomerBlocklistRuleEvaluator.java` - Fixed: 100
+2. `MerchantBlocklistRuleEvaluator.java` - Fixed: 95
+3. `CrossBorderHighRiskRuleEvaluator.java` - Fixed: 90
+4. `AmountThresholdRuleEvaluator.java` - Dynamic: 50-100
+5. `GeographicAnomalyRuleEvaluator.java` - Fixed: 75
+6. `CnpHighRiskRuleEvaluator.java` - Category-based: 60-75
+7. `AmountRangeRuleEvaluator.java` - Fixed: 70
+8. `MerchantRiskRuleEvaluator.java` - Fixed: 65
+9. `TimeOfDayAnomalyRuleEvaluator.java` - Fixed: 60
+10. `RoundAmountRuleEvaluator.java` - Dynamic: 55-65
+11. `CurrencyMismatchRuleEvaluator.java` - Fixed: 55
+12. `LargeWithdrawalRuleEvaluator.java` - Dynamic: 50-80
 
 ---
 
@@ -318,5 +430,6 @@ Potential improvements to risk scoring:
 
 ---
 
-**Last Reviewed:** June 9, 2026  
-**Reviewed By:** Development Team
+**Last Reviewed:** June 11, 2026  
+**Reviewed By:** Development Team  
+**Rule Count:** 12 distinct rule types with individual risk scoring algorithms

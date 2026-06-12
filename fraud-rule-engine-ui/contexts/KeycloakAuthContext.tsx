@@ -44,13 +44,12 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             keycloak.updateToken(30).then(() => {
               setToken(getToken());
             }).catch(() => {
-              console.error('Failed to refresh token');
               handleLogout();
             });
           };
         }
       } catch (error) {
-        console.error('Failed to initialize Keycloak:', error);
+        // Keycloak initialization failed
       } finally {
         setIsLoading(false);
       }
@@ -64,7 +63,6 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await keycloakLogin();
     } catch (error) {
-      console.error('Login failed:', error);
       setIsLoading(false);
     }
   };
@@ -77,7 +75,7 @@ export const KeycloakAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setUser(null);
       setToken(undefined);
     } catch (error) {
-      console.error('Logout failed:', error);
+      // Logout failed
     } finally {
       setIsLoading(false);
     }

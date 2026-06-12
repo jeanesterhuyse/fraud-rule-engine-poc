@@ -1,8 +1,0 @@
-{
-  "name": "fraud-rule-engine-ui-keycloak-deps",
-  "description": "Keycloak dependencies to install",
-  "dependencies": {
-    "next-auth": "^4.24.5",
-    "keycloak-js": "^23.0.0"
-  }
-}

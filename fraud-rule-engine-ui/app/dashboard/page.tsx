@@ -23,7 +23,6 @@ export default function DashboardPage() {
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to load dashboard data');
-      console.error('Dashboard error:', err);
     } finally {
       setLoading(false);
     }

@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react';
 import { blocklistApi } from '@/lib/api/blocklists';
 import { BlockedCustomer, BlockedMerchant, BlockCustomerRequest, BlockMerchantRequest } from '@/types/blocklist';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function BlocklistsPage() {
+  const { canEdit } = usePermissions();
+
   const [activeTab, setActiveTab] = useState<'customers' | 'merchants'>('customers');
   const [customers, setCustomers] = useState<BlockedCustomer[]>([]);
   const [merchants, setMerchants] = useState<BlockedMerchant[]>([]);
@@ -14,6 +17,7 @@ export default function BlocklistsPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const loadData = async () => {
@@ -59,14 +63,19 @@ export default function BlocklistsPage() {
   const handleAddBlock = async (data: BlockCustomerRequest | BlockMerchantRequest) => {
     try {
       if (activeTab === 'customers') {
-        await blocklistApi.blockCustomer(data as BlockCustomerRequest);
+        if ('customerId' in data) {
+          await blocklistApi.blockCustomer(data);
+        }
       } else {
-        await blocklistApi.blockMerchant(data as BlockMerchantRequest);
+        if ('merchantName' in data) {
+          await blocklistApi.blockMerchant(data);
+        }
       }
       setShowAddModal(false);
       await loadData();
     } catch (err: any) {
       setError(`Failed to add block: ${err.message}`);
+      throw err; // Re-throw to allow modal to handle error display
     }
   };
 
@@ -83,14 +92,17 @@ export default function BlocklistsPage() {
           <h1 className="text-2xl font-bold text-cap-deep-blue">Blocklists</h1>
           <p className="text-cap-text-muted mt-1">
             Manage blocked customers and merchants for instant fraud prevention
+            {!canEdit && <span className="text-cap-orange ml-2">(Read-only access)</span>}
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary"
-        >
-          + Add Block
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary"
+          >
+            + Add Block
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -200,12 +212,16 @@ export default function BlocklistsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleUnblockCustomer(customer.customerId)}
-                          className="text-cap-blue hover:text-cap-blue-600 font-medium"
-                        >
-                          Unblock
-                        </button>
+                        {canEdit ? (
+                          <button
+                            onClick={() => handleUnblockCustomer(customer.customerId)}
+                            className="text-cap-blue hover:text-cap-blue-600 font-medium"
+                          >
+                            Unblock
+                          </button>
+                        ) : (
+                          <span className="text-cap-text-muted text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -283,12 +299,16 @@ export default function BlocklistsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleUnblockMerchant(merchant.merchantName)}
-                          className="text-cap-blue hover:text-cap-blue-600 font-medium"
-                        >
-                          Unblock
-                        </button>
+                        {canEdit ? (
+                          <button
+                            onClick={() => handleUnblockMerchant(merchant.merchantName)}
+                            className="text-cap-blue hover:text-cap-blue-600 font-medium"
+                          >
+                            Unblock
+                          </button>
+                        ) : (
+                          <span className="text-cap-text-muted text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}

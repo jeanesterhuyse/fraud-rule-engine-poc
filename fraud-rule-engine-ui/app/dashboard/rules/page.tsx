@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 import { rulesService } from '@/lib/api/rules';
 import { Rule } from '@/types/api';
 import RuleEditModal from '@/components/RuleEditModal';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function RulesPage() {
+  const { canEdit } = usePermissions();
+
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +17,7 @@ export default function RulesPage() {
 
   useEffect(() => {
     loadRules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadRules = async () => {
@@ -51,13 +55,23 @@ export default function RulesPage() {
   };
 
   const handleSaveEdit = async (id: number, updates: Partial<Rule>) => {
-    await rulesService.update(id, updates);
-    await loadRules();
+    try {
+      await rulesService.update(id, updates);
+      await loadRules();
+      setEditingRule(null);
+    } catch (err: any) {
+      setError(`Failed to update rule: ${err.message}`);
+    }
   };
 
   const handleCreateRule = async (ruleData: Partial<Rule>) => {
-    await rulesService.create(ruleData);
-    await loadRules();
+    try {
+      await rulesService.create(ruleData);
+      await loadRules();
+      setShowCreateModal(false);
+    } catch (err: any) {
+      setError(`Failed to create rule: ${err.message}`);
+    }
   };
 
   const handleDelete = async (rule: Rule) => {
@@ -122,17 +136,20 @@ export default function RulesPage() {
           <h1 className="cap-page-title">Fraud Detection Rules</h1>
           <p className="mt-2 text-sm text-cap-text-muted">
             Manage fraud detection rules. Rules are evaluated in priority order (highest first).
+            {!canEdit && <span className="text-cap-orange ml-2">(Read-only access)</span>}
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleCreate}
-          >
-            Create Rule
-          </button>
-        </div>
+        {canEdit && (
+          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleCreate}
+            >
+              Create Rule
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -162,26 +179,28 @@ export default function RulesPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => handleToggle(rule)}
-                    className={rule.enabled ? 'btn-secondary' : 'btn-success'}
-                  >
-                    {rule.enabled ? 'Disable' : 'Enable'}
-                  </button>
-                  <button
-                    onClick={() => handleEdit(rule)}
-                    className="btn-outline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(rule)}
-                    className="btn-error"
-                  >
-                    Delete
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      onClick={() => handleToggle(rule)}
+                      className={rule.enabled ? 'btn-secondary' : 'btn-success'}
+                    >
+                      {rule.enabled ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(rule)}
+                      className="btn-outline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(rule)}
+                      className="btn-error"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Rule Parameters */}

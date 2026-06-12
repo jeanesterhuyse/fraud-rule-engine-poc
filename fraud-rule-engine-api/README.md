@@ -456,8 +456,11 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 ### Security (Current)
 
 - **Keycloak OAuth2/OIDC** integration ✅
-- **Role-based access control** (fraud_analyst, fraud_viewer) ✅
+- **Role-based access control (RBAC)** with @PreAuthorize annotations ✅
+  - `fraud_analyst` and `admin` roles: Full access (create/edit/delete)
+  - `fraud_viewer` role: Read-only access (view only)
 - **JWT Bearer token validation** ✅
+- **Method-level security** - Write operations return 403 Forbidden for viewers ✅
 - **Active Directory ready** - Keycloak supports LDAP/AD integration
 - Test users with realistic credentials
 - Auto-configured realm with users and roles

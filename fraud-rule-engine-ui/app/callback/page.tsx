@@ -14,7 +14,6 @@ export default function CallbackPage() {
   useEffect(() => {
     // Prevent double execution in React StrictMode
     if (hasProcessed.current) {
-      console.log('Callback already processed, skipping');
       return;
     }
 
@@ -38,7 +37,6 @@ export default function CallbackPage() {
       try {
         // Get the code verifier from session storage
         const codeVerifier = getCodeVerifier();
-        console.log('Code verifier retrieved:', codeVerifier ? 'Yes' : 'No');
         if (!codeVerifier) {
           throw new Error('Missing code verifier - please try logging in again');
         }
@@ -68,12 +66,10 @@ export default function CallbackPage() {
 
         if (!tokenResponse.ok) {
           const errorData = await tokenResponse.json().catch(() => ({ error: 'unknown' }));
-          console.error('Token exchange failed:', tokenResponse.status, errorData);
           throw new Error(`Failed to exchange authorization code for tokens: ${errorData.error_description || errorData.error || tokenResponse.statusText}`);
         }
 
         const tokens = await tokenResponse.json();
-        console.log('Token exchange successful, tokens received');
 
         // Store tokens
         TokenManager.setTokens(tokens.access_token, tokens.refresh_token);
@@ -84,7 +80,6 @@ export default function CallbackPage() {
         // Redirect to dashboard
         router.push('/dashboard');
       } catch (err: any) {
-        console.error('Token exchange error:', err);
         setError(err.message || 'Failed to complete authentication');
         setTimeout(() => router.push('/login-keycloak'), 3000);
       }

@@ -57,7 +57,6 @@ export default function TransactionsPage() {
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to load transactions');
-      console.error('Transactions error:', err);
     } finally {
       setLoading(false);
     }
@@ -168,7 +167,7 @@ export default function TransactionsPage() {
       <div className="card border-l-4 border-cap-red">
         <p className="text-cap-red font-medium">Error: {error}</p>
         <button
-          onClick={loadTransactions}
+          onClick={() => loadTransactions()}
           className="mt-2 text-sm text-cap-red hover:text-cap-red-600 underline"
         >
           Try again

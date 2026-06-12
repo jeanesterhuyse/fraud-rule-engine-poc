@@ -30,14 +30,9 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('API returned 401 Unauthorized');
-      console.error('Request URL:', error.config?.url);
-      console.error('Token present:', !!TokenManager.getAccessToken());
-
       // Token expired or invalid - redirect to login
       TokenManager.clearTokens();
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        console.log('Redirecting to login due to 401');
         window.location.href = '/login-keycloak';
       }
     }

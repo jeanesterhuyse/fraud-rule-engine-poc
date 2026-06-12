@@ -10,20 +10,24 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuth = () => {
       const token = TokenManager.getAccessToken();
 
       if (!token) {
-        console.log('ProtectedRoute: No token, redirecting to login');
         router.push('/login-keycloak');
-      } else {
-        console.log('ProtectedRoute: Token exists, user authenticated');
+      } else if (isMounted) {
         setIsAuthenticated(true);
         setIsChecking(false);
       }
     };
 
     checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   if (isChecking) {

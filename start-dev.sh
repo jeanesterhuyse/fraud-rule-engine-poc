@@ -19,6 +19,30 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
+# Check if backend JAR file exists
+JAR_FILE="$SCRIPT_DIR/fraud-rule-engine-api/target/fraud-rule-engine-api-1.0.0-SNAPSHOT.jar"
+if [ ! -f "$JAR_FILE" ]; then
+    echo "❌ Backend JAR file not found!"
+    echo ""
+    echo "   This is your first time running the project."
+    echo "   Please build the backend first:"
+    echo ""
+    echo "   cd fraud-rule-engine-api"
+    echo "   mvn clean package -DskipTests"
+    echo "   cd .."
+    echo ""
+    echo "   Then run this script again: ./start-dev.sh"
+    echo ""
+    exit 1
+fi
+
+# Step 0: Check port availability (non-blocking warning)
+echo "🔍 Checking port availability..."
+if [ -f "$SCRIPT_DIR/check-ports.sh" ]; then
+    "$SCRIPT_DIR/check-ports.sh" || echo "⚠️  Some ports are in use but continuing..."
+    echo ""
+fi
+
 # Step 1: Start all Docker services
 echo "📦 Starting Docker services..."
 cd "$SCRIPT_DIR"
@@ -92,8 +116,10 @@ echo "🌐 Access Points:"
 echo "   Frontend UI:        http://localhost:3000"
 echo "   Login Page:         http://localhost:3000/login-keycloak"
 echo "   API:                http://localhost:8080"
-echo "   Grafana Logs:       http://localhost:3001"
+echo "   Grafana Dashboard:  http://localhost:3001 (No login - Dashboard pre-loaded)"
+echo "   pgAdmin (DB UI):    http://localhost:5050 (admin@admin.com/admin)"
 echo "   Keycloak Admin:     http://localhost:8180 (admin/admin)"
+echo "   Kafka UI:           http://localhost:8090"
 echo ""
 echo "🔐 Test Users:"
 echo "   Analyst:  john.smith / FraudDetect123!"

@@ -23,6 +23,7 @@ build/
 dist/
 
 # Environment Variables & Secrets
+# Note: .env.development is tracked (contains safe defaults only)
 .env
 .env.local
 .env.development.local
