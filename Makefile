@@ -67,7 +67,7 @@ health:
 
 # Run backend tests
 test:
-	cd fraud-rule-engine-api && mvn test
+	cd fraud-rule-engine-api && JAVA_HOME=$$(command -v /usr/libexec/java_home >/dev/null 2>&1 && /usr/libexec/java_home -v 21 2>/dev/null || echo $$JAVA_HOME) mvn test
 
 # PostgreSQL shell
 db-shell:
