@@ -184,6 +184,40 @@
                 </configuration>
             </plugin>
 
+            <!-- Enforce Java 21 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[21,22)</version>
+                                    <message>
+                                        ❌ ERROR: This project requires Java 21!
+
+                                        You are currently using: ${java.version}
+
+                                        Please install Java 21:
+                                        • Download from: https://adoptium.net/
+                                        • Or set JAVA_HOME to Java 21:
+                                          export JAVA_HOME=$(/usr/libexec/java_home -v 21)  # macOS
+
+                                        Then run: mvn clean package -DskipTests
+                                    </message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
