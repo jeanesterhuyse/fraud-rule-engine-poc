@@ -19,32 +19,41 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-# Check Java version and switch to Java 21 if needed
-echo "☕ Checking Java version..."
-if command -v java &> /dev/null; then
-    JAVA_VERSION=$(java -version 2>&1 | head -n 1)
-    if ! echo "$JAVA_VERSION" | grep -q "version \"21"; then
-        echo "⚠️  Current Java version: $JAVA_VERSION"
-        if [[ "$OSTYPE" == "darwin"* ]] && command -v /usr/libexec/java_home &> /dev/null; then
-            if /usr/libexec/java_home -v 21 &> /dev/null; then
-                export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-                export PATH="$JAVA_HOME/bin:$PATH"
-                echo "✅ Switched to Java 21: $JAVA_HOME"
+# Auto-switch to Java 21 using helper script
+echo "☕ Ensuring Java 21 is active..."
+if [ -f "$SCRIPT_DIR/use-java-21.sh" ]; then
+    # Source the helper script to set Java 21
+    source "$SCRIPT_DIR/use-java-21.sh"
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to set Java 21. Please install it from https://adoptium.net/"
+        exit 1
+    fi
+else
+    # Fallback if helper script doesn't exist
+    if command -v java &> /dev/null; then
+        JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+        if ! echo "$JAVA_VERSION" | grep -q "version \"21"; then
+            echo "⚠️  Current Java version: $JAVA_VERSION"
+            if [[ "$OSTYPE" == "darwin"* ]] && command -v /usr/libexec/java_home &> /dev/null; then
+                if /usr/libexec/java_home -v 21 &> /dev/null; then
+                    export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                    echo "✅ Switched to Java 21: $JAVA_HOME"
+                else
+                    echo "❌ Java 21 not found. Please install Java 21 from https://adoptium.net/"
+                    exit 1
+                fi
             else
-                echo "❌ Java 21 not found. Please install Java 21 from https://adoptium.net/"
+                echo "❌ Java 21 required. Please set JAVA_HOME or run: source ./use-java-21.sh"
                 exit 1
             fi
         else
-            echo "❌ Java 21 required. Please set JAVA_HOME:"
-            echo "   export JAVA_HOME=\$(/usr/libexec/java_home -v 21)"
-            exit 1
+            echo "✅ Java 21 already active"
         fi
     else
-        echo "✅ Java 21 detected"
+        echo "❌ Java not installed. Please install Java 21 from https://adoptium.net/"
+        exit 1
     fi
-else
-    echo "❌ Java not installed. Please install Java 21 from https://adoptium.net/"
-    exit 1
 fi
 echo ""
 
@@ -57,7 +66,8 @@ if [ ! -f "$JAR_FILE" ]; then
     echo ""
 
     cd "$SCRIPT_DIR/fraud-rule-engine-api"
-    JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn clean package -DskipTests
+    # Use JAVA_HOME that was already set above
+    mvn clean package -DskipTests
 
     if [ $? -ne 0 ]; then
         echo ""
